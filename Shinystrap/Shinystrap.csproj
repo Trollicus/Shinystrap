@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <ApplicationManifest>src\Pages\app.manifest</ApplicationManifest>
+        <Description>Roblox custom launcher</Description>
+        <Copyright>Trollicus</Copyright>
+        <NeutralLanguage>en-150</NeutralLanguage>
+        <PackageIcon>X5I3v-Photoroom.png</PackageIcon>
+        <ApplicationIcon>X5I3v-Photoroom.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommunityToolkit.WinUI.Notifications" Version="7.1.2" />
+      <PackageReference Include="WPF-UI" Version="4.2.0" />
+      <PackageReference Include="WPF-UI.Tray" Version="4.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="src\Handlers\Shinystrap\Shinystrap.png" />
+      <Resource Include="src\Handlers\Shinystrap\Shinystrap.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
+</Project>

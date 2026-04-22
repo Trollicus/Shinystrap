@@ -1,0 +1,70 @@
+﻿<Page
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+      x:Class="Shinystrap.Pages.Settings"
+      mc:Ignorable="d" 
+      d:DesignWidth="695"
+      d:DesignHeight="470"
+      Title="Settings">
+
+    <Grid>
+        <TextBlock Text="Settings" Foreground="White" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,18,0,0"/>
+
+        <ui:CardControl Margin="10,60,10,0" VerticalAlignment="Top">
+            <ui:CardControl.Icon>
+                <ui:SymbolIcon Symbol="PhoneUpdate24" />
+            </ui:CardControl.Icon>
+
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" >
+                        <TextBlock Text="Check Update" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <TextBlock  Text="Checks whether Shinstrap has update" Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+            </ui:CardControl.Header>
+
+            <ui:Button Content="Update" Foreground="White" Width="83" Click="CheckUpdate_OnClick"/>
+
+
+        </ui:CardControl>
+        <ui:CardControl Margin="10,136,10,0" VerticalAlignment="Top">
+            <ui:CardControl.Icon>
+                <ui:SymbolIcon Symbol="PhoneUpdateCheckmark20" />
+            </ui:CardControl.Icon>
+
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" >
+                        <TextBlock Text="Auto Updater" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <TextBlock  Text="Automatically checks and updates in the background." Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+            </ui:CardControl.Header>
+
+            <ui:ToggleSwitch x:Name="UpdateToggle" VerticalAlignment="Center" Checked="UpdateToggle_Checked" Unchecked="UpdateToggle_Unchecked"/>
+
+        </ui:CardControl>
+        <ui:Button Content="Initialize"
+            Foreground="White"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Width="142"
+            Height="38"
+            Margin="0,0,10,10"
+            Click="Initialize_OnClick">
+        </ui:Button>
+        <ui:Button Content="Uninstall"
+            Foreground="White"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Width="130"
+            Height="38"
+            Margin="0,0,157,10" Click="UnInstall_OnClick">
+        </ui:Button>
+
+    </Grid>
+</Page>

@@ -1,0 +1,79 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "CommunityToolkit.WinUI.Notifications/7.1.2": {
+        "runtime": {
+          "lib/net5.0-windows10.0.18362/CommunityToolkit.WinUI.Notifications.dll": {
+            "assemblyVersion": "7.1.0.0",
+            "fileVersion": "7.1.2.1"
+          }
+        }
+      },
+      "WPF-UI/4.2.0": {
+        "dependencies": {
+          "WPF-UI.Abstractions": "4.2.0"
+        },
+        "runtime": {
+          "lib/net10.0-windows7.0/Wpf.Ui.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "WPF-UI.Abstractions/4.2.0": {
+        "runtime": {
+          "lib/net10.0/Wpf.Ui.Abstractions.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "WPF-UI.Tray/4.2.0": {
+        "dependencies": {
+          "WPF-UI": "4.2.0"
+        },
+        "runtime": {
+          "lib/net10.0-windows7.0/Wpf.Ui.Tray.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CommunityToolkit.WinUI.Notifications/7.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vUYLJlW8+ev4qVIxaz3gix2UoSZX6gE7a9GLonC7taaqKWIiusVfzb62eoHSAOiXxyfqe8HknDk2rAdsF19igQ==",
+      "path": "communitytoolkit.winui.notifications/7.1.2",
+      "hashPath": "communitytoolkit.winui.notifications.7.1.2.nupkg.sha512"
+    },
+    "WPF-UI/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cLJCqIYGtbSU8da9UnPV83SU5XttiM+BEZWW/jLSLjjmBvK2s54oDcO2wP36GEVgiXu5/QXJHlgXk0f14Cvw3g==",
+      "path": "wpf-ui/4.2.0",
+      "hashPath": "wpf-ui.4.2.0.nupkg.sha512"
+    },
+    "WPF-UI.Abstractions/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-N4/ODw2F7yniiaEO6aEaxFC8aMJDJTGoeNNv3LLXFJs+qY2Flu9fMqFrRfcCFTk4ZKg1+guUB6Y0QKi6AGt88w==",
+      "path": "wpf-ui.abstractions/4.2.0",
+      "hashPath": "wpf-ui.abstractions.4.2.0.nupkg.sha512"
+    },
+    "WPF-UI.Tray/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/t6fXMMuZ7tcQ6EKecG5e3Qyt9tdtKQP0u8gqpn+v+IDVVPWDXOsdDQ6t7QPteXi4UqGWFi8/ARoxzuNJ+RvFg==",
+      "path": "wpf-ui.tray/4.2.0",
+      "hashPath": "wpf-ui.tray.4.2.0.nupkg.sha512"
+    }
+  }
+}

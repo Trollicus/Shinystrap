@@ -1,0 +1,53 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Denis\\RiderProjects\\Shinystrap\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{6E12B59E-6320-46E9-BF81-2CF60A0B4813}|Shinystrap\\Shinystrap.csproj|c:\\users\\denis\\riderprojects\\shinystrap\\shinystrap\\src\\pages\\fastflagseditor.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6E12B59E-6320-46E9-BF81-2CF60A0B4813}|Shinystrap\\Shinystrap.csproj|solutionrelative:shinystrap\\src\\pages\\fastflagseditor.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6E12B59E-6320-46E9-BF81-2CF60A0B4813}|Shinystrap\\Shinystrap.csproj|c:\\users\\denis\\riderprojects\\shinystrap\\shinystrap\\src\\pages\\fastflagseditor.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{6E12B59E-6320-46E9-BF81-2CF60A0B4813}|Shinystrap\\Shinystrap.csproj|solutionrelative:shinystrap\\src\\pages\\fastflagseditor.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "FastFlagsEditor.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\Denis\\RiderProjects\\Shinystrap\\Shinystrap\\src\\Pages\\FastFlagsEditor.xaml.cs",
+              "RelativeDocumentMoniker": "Shinystrap\\src\\Pages\\FastFlagsEditor.xaml.cs",
+              "ToolTip": "C:\\Users\\Denis\\RiderProjects\\Shinystrap\\Shinystrap\\src\\Pages\\FastFlagsEditor.xaml.cs",
+              "RelativeToolTip": "Shinystrap\\src\\Pages\\FastFlagsEditor.xaml.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAAAqwIQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-15T12:24:13.07Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "FastFlagsEditor.xaml",
+              "DocumentMoniker": "C:\\Users\\Denis\\RiderProjects\\Shinystrap\\Shinystrap\\src\\Pages\\FastFlagsEditor.xaml",
+              "RelativeDocumentMoniker": "Shinystrap\\src\\Pages\\FastFlagsEditor.xaml",
+              "ToolTip": "C:\\Users\\Denis\\RiderProjects\\Shinystrap\\Shinystrap\\src\\Pages\\FastFlagsEditor.xaml",
+              "RelativeToolTip": "Shinystrap\\src\\Pages\\FastFlagsEditor.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-12T19:34:38.566Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
