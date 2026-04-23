@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Controls;
+using Shinystrap.Handlers.Shinystrap;
 
 namespace Shinystrap.Pages
 {
@@ -23,6 +24,8 @@ namespace Shinystrap.Pages
         {
             InitializeComponent();
             DataContext = this;
+            
+            SnackbarHelper.ShowInfo("Warning!", "There's Allowlist by Roblox about the flags, se at your own risk!");
         }
 
         public async Task CreateFFlagsFile()

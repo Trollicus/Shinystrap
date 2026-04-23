@@ -52,7 +52,7 @@ public partial class MainWindow
                 SnackbarHelper.ShowError("Internet", "Internet unavailable, please connect to the internet and try again!");
             }
         
-            if (await _robloxApi.CheckForUpdates())
+            if (await _robloxApi.CheckForUpdatesAsync())
             {
                 SnackbarHelper.ShowWarning("Roblox", "Version mismatch! Please update your Roblox", TimeSpan.FromSeconds(5));
             }

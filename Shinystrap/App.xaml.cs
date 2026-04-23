@@ -14,51 +14,59 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        if (e.Args.Length > 0)
+        if (e.Args.Length == 0)
         {
-            HandleProtocolAsync(e.Args)
-                .ContinueWith(_ => Dispatcher.Invoke(Current.Shutdown));
+            return;
         }
+
+        _ = HandleProtocolLaunchAsync(e.Args)
+            .ContinueWith(_ => Dispatcher.Invoke(Shutdown));
     }
 
-    private async Task HandleProtocolAsync(string[] args)
+    private async Task HandleProtocolLaunchAsync(string[] args)
     {
         var api = new RobloxApi();
-
         var currentVersion = await api.GetRobloxVersionAsync();
+
         var robloxPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox");
 
-        if (args.Length > 0)
+        var decodedArgs = WebUtility.UrlDecode(args[0]).Trim();
+
+        var parsedArgs = decodedArgs
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => part.Split(':', 2))
+            .Where(part => part.Length == 2)
+            .ToDictionary(part => part[0], part => part[1]);
+
+        if (!parsedArgs.TryGetValue("placelauncherurl", out var placeUrl) ||
+            !parsedArgs.TryGetValue("gameinfo", out var gameInfo))
         {
-            var decodedArgs = WebUtility.UrlDecode(args[0]).Trim();
-
-            var coolArgs = decodedArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Split(':', 2))
-                .Where(x => x.Length == 2).ToDictionary(x => x[0], x => x[1]);
-
-            var spoofBrowserTracker = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-
-            var placeUrl = coolArgs["placelauncherurl"];
-
-            var uri = new Uri(placeUrl);
-            var query = HttpUtility.ParseQueryString(uri.Query);
-
-            query["browserTrackerId"] = spoofBrowserTracker.ToString();
-
-            var builder = new UriBuilder(uri)
-            {
-                Query = query.ToString()
-            };
-
-            var updatedUrl = builder.ToString();
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = Path.Combine(robloxPath +
-                                        $@"\Versions\{currentVersion}\RobloxPlayerBeta.exe"),
-                Arguments =
-                    $"--app -t {coolArgs["gameinfo"]} -j {updatedUrl} -LaunchExp InApp"
-            });
+            MessageBox.Show("Invalid Roblox protocol arguments, pls contact admin/mod");
+            throw new InvalidOperationException("Invalid Roblox protocol arguments.");
         }
+
+        var spoofBrowserTracker = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
+
+        var uri = new Uri(placeUrl);
+        var query = HttpUtility.ParseQueryString(uri.Query);
+        query["browserTrackerId"] = spoofBrowserTracker.ToString();
+
+        var updatedUrl = new UriBuilder(uri)
+        {
+            Query = query.ToString()
+        }.ToString();
+
+        var robloxExe = Path.Combine(
+            robloxPath,
+            "Versions",
+            currentVersion,
+            "RobloxPlayerBeta.exe");
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = robloxExe,
+            Arguments = $"--app -t {gameInfo} -j {updatedUrl} -LaunchExp InApp"
+        });
     }
 }

@@ -61,7 +61,7 @@ namespace Shinystrap.Pages
             {
                 var api = new RobloxApi();
 
-                if (await api.CheckForUpdates())
+                if (await api.CheckForUpdatesAsync())
                 {
                     SnackbarHelper.ShowWarning(
                         "Shinystrap",

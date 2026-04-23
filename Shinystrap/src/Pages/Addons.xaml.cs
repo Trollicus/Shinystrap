@@ -17,6 +17,11 @@ namespace Shinystrap.Pages
         private readonly RobloxApi _api = new();
         private readonly HttpHandler _httpHandler = new();
 
+        private CancellationTokenSource? _cts;
+        private Mutex? _mutex1;
+        private Mutex? _mutex2;
+        private string? _lastNotifiedIp;
+        
         public Addons()
         {
             InitializeComponent();
@@ -29,15 +34,17 @@ namespace Shinystrap.Pages
                 var dialog = new Wpf.Ui.Controls.MessageBox
                 {
                     Title = "⚠️ Caution",
-                    Content =
-                        "This action is irreversible. Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
+                    Content = "This action is irreversible. Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
                     PrimaryButtonText = "Yes, Reinstall",
-                    CloseButtonText = "Cancel",
+                    CloseButtonText = "Cancel"
                 };
 
                 var result = await dialog.ShowDialogAsync();
+                if (result != Wpf.Ui.Controls.MessageBoxResult.Primary)
+                {
+                    return;
+                }
 
-                if (result != Wpf.Ui.Controls.MessageBoxResult.Primary) return;
                 var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 var robloxInstallmentPath = Path.Combine(appDataPath, "Roblox");
 
@@ -46,23 +53,25 @@ namespace Shinystrap.Pages
                     if (Directory.Exists(robloxInstallmentPath))
                     {
                         Directory.Delete(robloxInstallmentPath, true);
-                        Console.WriteLine("Roblox folder deleted successfully.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("No Roblox folder found.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
+                    SnackbarHelper.ShowError("Error", "Error deleting Roblox Message");
                 }
 
                 var rbxVersion = await _api.GetRobloxVersionAsync();
+                var installerPath = Path.Combine(Directory.GetCurrentDirectory(), "RobloxPlayerInstaller.exe");
 
-                await _httpHandler.DownloadFileAsync($"https://setup.rbxcdn.com/{rbxVersion}-RobloxPlayerInstaller.exe",
-                    Directory.GetCurrentDirectory() + "\\RobloxPlayerInstaller.exe");
-                Process.Start(Directory.GetCurrentDirectory() + "\\RobloxPlayerInstaller.exe");
+                await _httpHandler.DownloadFileAsync(
+                    $"https://setup.rbxcdn.com/{rbxVersion}-RobloxPlayerInstaller.exe",
+                    installerPath);
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = installerPath,
+                    UseShellExecute = true
+                });
             }
             catch (Exception ex)
             {
@@ -70,21 +79,23 @@ namespace Shinystrap.Pages
             }
         }
 
-        private CancellationTokenSource? _cts;
-
         private void TrackServerLocation_OnChecked(object sender, RoutedEventArgs e)
         {
+            if (_cts is not null)
+            {
+                return;
+            }
+
             _cts = new CancellationTokenSource();
-            _ = Task.Run(() => WatchLogs(_cts.Token));
+            _ = WatchLogsAsync(_cts.Token);
         }
 
-        private string? _lastNotifiedIp;
-
-        private async Task WatchLogs(CancellationToken token)
+        private async Task WatchLogsAsync(CancellationToken token)
         {
             var robloxLogsPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Roblox\\logs");
+                "Roblox",
+                "logs");
 
             var ipRegex = new Regex(@"\b(?:\d{1,3}\.){3}\d{1,3}\b");
 
@@ -94,7 +105,7 @@ namespace Shinystrap.Pages
                     .OrderByDescending(File.GetLastWriteTime)
                     .FirstOrDefault();
 
-                if (latestLog == null)
+                if (latestLog is null)
                 {
                     await Task.Delay(1000, token);
                     continue;
@@ -138,16 +149,14 @@ namespace Shinystrap.Pages
                     var ip = match.Value;
 
                     if (ip == _lastNotifiedIp) continue;
-
-                    if (!IsValidPublicIp(ip)) continue;
-
+                    
                     _lastNotifiedIp = ip;
-                    OnServerIpDetected(ip);
+                    await OnServerIpDetectedAsync(ip);
                 }
             }
         }
 
-        private async void OnServerIpDetected(string ip)
+        private async Task OnServerIpDetectedAsync(string ip)
         {
             try
             {
@@ -171,23 +180,14 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowError("Failed to connect to server", exception.Message);
             }
         }
-
-        private bool IsValidPublicIp(string ip)
-        {
-            return !(ip.StartsWith("127.") ||
-                     ip.StartsWith("10.") ||
-                     ip.StartsWith("192.168.") ||
-                     ip.StartsWith("172."));
-        }
-
+        
         private void TrackServerLocation_OnUnchecked(object sender, RoutedEventArgs e)
         {
             _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
+            _lastNotifiedIp = null;
         }
-
-        private Mutex? _mutex1;
-        private Mutex? _mutex2;
-        //TODO: Idea show all instances of boblox stolen idea from this guy: https://github.com/Avaluate/MultipleRobloxInstances
 
         private void RbxMutex_OnChecked(object sender, RoutedEventArgs e)
         {
@@ -198,7 +198,7 @@ namespace Shinystrap.Pages
 
                 if (created1 && created2) return;
                 SnackbarHelper.ShowError("Error", "Make sure roblox is closed first!");
-                Dispatcher.BeginInvoke(() => { MutexSwitch.IsChecked = false; });
+                Dispatcher.BeginInvoke(() => MutexSwitch.IsChecked = false);
             }
             catch (Exception)
             {
@@ -206,7 +206,7 @@ namespace Shinystrap.Pages
 
                 SnackbarHelper.ShowError("Failed to initialize", "Close all Roblox windows first!");
 
-                Dispatcher.BeginInvoke(() => { MutexSwitch.IsChecked = false; });
+                Dispatcher.BeginInvoke(() => MutexSwitch.IsChecked = false);
             }
         }
 
