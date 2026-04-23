@@ -33,14 +33,19 @@ namespace Shinystrap.Pages
             var api = new RobloxApi();
             var currentVersion = await api.GetRobloxVersionAsync();
             
-            var robloxPath =
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), $"Roblox\\{currentVersion}\\ClientSettings");
+            var robloxPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Roblox",
+                currentVersion,
+                "ClientSettings");
             
             Directory.CreateDirectory(robloxPath);
 
-            if (!File.Exists($"{robloxPath}\\ClientAppSettings.json"))
+            var filePath = Path.Combine(robloxPath, "ClientAppSettings.json");
+
+            if (!File.Exists(filePath))
             {
-                File.Create($"{robloxPath}\\ClientAppSettings.json");
+                await using var _ = File.Create(filePath);
             }
         }
 
@@ -114,9 +119,13 @@ namespace Shinystrap.Pages
 
             var filePath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                $"Roblox\\{currentVersion}\\ClientSettings\\ClientAppSettings.json");
-
+                "Roblox",
+                currentVersion,
+                "ClientSettings",
+                "ClientAppSettings.json");
+            
             Dictionary<string, object> existing = new();
+            
             var fileContent = await File.ReadAllTextAsync(filePath);
             if (!string.IsNullOrWhiteSpace(fileContent))
             {
