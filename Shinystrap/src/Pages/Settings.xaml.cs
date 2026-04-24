@@ -131,8 +131,8 @@ namespace Shinystrap.Pages
         private async Task CheckForUpdatesAsync()
         {
             var appVersion = await _handler.GetStringAsync("https://raw.githubusercontent.com/Trollicus/Shinystrap/main/version.txt");
-
-            if (string.Equals(_version, appVersion, StringComparison.OrdinalIgnoreCase))
+            
+            if (string.Equals(_version, appVersion.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 SnackbarHelper.ShowSuccess("Shinystrap", "You're already on the latest version!");
                 return;

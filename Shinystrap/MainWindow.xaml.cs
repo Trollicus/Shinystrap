@@ -1,8 +1,9 @@
-﻿using System.Net;
+﻿using System.Net.Http;
 using System.Security.Principal;
 using System.Windows;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
+using Shinystrap.Handlers.Web;
 using Shinystrap.Pages;
 using Wpf.Ui;
 
@@ -46,7 +47,7 @@ public partial class MainWindow
     {
         while (true)
         {
-            if (!HasInternet())
+            if (!await HasInternet())
             {
                 SnackbarHelper.ShowError("Internet", "Internet unavailable, please connect to the internet and try again!");
             }
@@ -60,12 +61,14 @@ public partial class MainWindow
         }
     }
     
-    bool HasInternet()
+    private async Task<bool> HasInternet()
     {
         try
         {
-            var entry = Dns.GetHostEntry("dns.google");
-            return entry.AddressList.Length > 0;
+            var handler = new HttpHandler();
+            using var request = await handler.SendAsync("https://github.com/Trollicus/Shinystrap", HttpMethod.Get);
+
+            return request.IsSuccessStatusCode;
         }
         catch
         {

@@ -127,7 +127,7 @@ public sealed class RobloxManager
 
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        if (GameHistory.All(x => x.PlaceId != placeId))
+                        if (GameHistory.All(x => x.PlaceId != placeId || !x.Description.Contains(robloxName)))
                         {
                             GameHistory.Insert(0, new GameHistory.GameHistoryItem
                             {
