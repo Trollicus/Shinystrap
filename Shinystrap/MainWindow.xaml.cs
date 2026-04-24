@@ -36,7 +36,7 @@ public partial class MainWindow
     
     bool IsAdministrator()
     {
-#pragma warning disable CA1416
+        #pragma warning disable CA1416
         var identity = WindowsIdentity.GetCurrent();
         var principal = new WindowsPrincipal(identity);
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
@@ -75,8 +75,9 @@ public partial class MainWindow
 
     private void FluentWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        e.Cancel = true;
-        Hide();
+        Environment.Exit(0);
+        //e.Cancel = true;
+        //Hide();
     }
 
     private void TrayQuit_Click(object sender, RoutedEventArgs e)
