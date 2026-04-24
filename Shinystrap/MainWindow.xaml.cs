@@ -31,7 +31,6 @@ public partial class MainWindow
             Environment.Exit(0);
         }
         
-        
         _ = ChecksAsync();
     }
     

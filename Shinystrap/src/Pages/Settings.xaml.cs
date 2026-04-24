@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Windows;
 using Microsoft.Win32;
 using Shinystrap.Handlers.Roblox;
@@ -129,36 +130,68 @@ namespace Shinystrap.Pages
 
         private async Task CheckForUpdatesAsync()
         {
-            //TODO: Github version link add
-            var appVersion = await _handler.GetStringAsync("https://github.com/Trollicus/Shinystrap/blob/main/version.txt");
+            var appVersion = await _handler.GetStringAsync("https://raw.githubusercontent.com/Trollicus/Shinystrap/main/version.txt");
 
-            if (_version != appVersion.Trim())
+            if (string.Equals(_version, appVersion, StringComparison.OrdinalIgnoreCase))
             {
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "Bin\\");
-
-                Console.WriteLine(path);
-
-                var oldPath = Path.Combine(AppContext.BaseDirectory + "Bin");
-    
-                if (File.Exists(oldPath))
-                {
-                    File.Delete(oldPath);
-                }
-
-                Console.WriteLine(AppContext.BaseDirectory + "Shinystrap.exe");
-
-                File.Move(AppContext.BaseDirectory + "Shinystrap.exe",
-                    path);
-
-
-                await _handler.DownloadFileAsync("", Path.Combine(Directory.GetCurrentDirectory() + "\\Shinystrap.exe"));
-
-                Process.Start(Directory.GetCurrentDirectory() + "\\Shinystrap.exe");
-                Environment.Exit(0);
+                SnackbarHelper.ShowSuccess("Shinystrap", "You're already on the latest version!");
+                return;
             }
+
+            var appDir = AppContext.BaseDirectory;
+            var tempRoot = Path.Combine(Path.GetTempPath(), "Shinystrap", Guid.NewGuid().ToString("N"));
+            var zipPath = Path.Combine(tempRoot, "update.zip");
+            var extractPath = Path.Combine(tempRoot, "extract");
+            Directory.CreateDirectory(tempRoot);
+            Directory.CreateDirectory(extractPath);
+            
+            var updateUrl = "https://github.com/Trollicus/Shinystrap/releases/latest/download/Shinystrap.zip";
+            await _handler.DownloadFileAsync(updateUrl, zipPath);
+
+            await ZipFile.ExtractToDirectoryAsync(zipPath, extractPath, overwriteFiles: true);
+
+            var updaterScript = Path.Combine(tempRoot, "update.bat");
+            var appExe = Path.Combine(appDir, "Shinystrap.exe");
+            
+            var script = $"""
+                          @echo off
+                          setlocal
+                          cd /d "{appDir}"
+
+                          :waitloop
+                          timeout /t 2 /nobreak >nul
+                          tasklist /fi "imagename eq Shinystrap.exe" | find /i "Shinystrap.exe" >nul
+                          if not errorlevel 1 goto waitloop
+
+                          del /f /q "{appDir}\*.*" >nul 2>&1
+                          for /d %%D in ("{appDir}\*") do rmdir /s /q "%%D" >nul 2>&1
+
+                          xcopy /y /e /i "{extractPath}\*" "{appDir}\" >nul
+
+                          powershell -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath '{appExe}' -WorkingDirectory '{appDir}'"
+                          
+                          timeout /t 2 /nobreak >nul
+                          
+                          rmdir /s /q "{extractPath}" >nul 2>&1
+                          del /f /q "{zipPath}" >nul 2>&1
+                          rmdir /s /q "{tempRoot}" >nul 2>&1
+                          
+                          exit /b 0
+                          """;
+
+            await File.WriteAllTextAsync(updaterScript, script);
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = updaterScript,
+                UseShellExecute = true,
+                WorkingDirectory = tempRoot
+            });
+
+            Environment.Exit(0);
         }
-        
-        private CancellationTokenSource _updateCts;
+
+        private CancellationTokenSource _updateCts = null!;
 
         private void UpdateToggle_Checked(object sender, RoutedEventArgs e)
         {

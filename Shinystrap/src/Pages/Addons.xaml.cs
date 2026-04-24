@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
 using CommunityToolkit.WinUI.Notifications;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
@@ -12,7 +11,7 @@ using Shinystrap.Handlers.Web;
 
 namespace Shinystrap.Pages
 {
-    public partial class Addons : Page
+    public partial class Addons
     {
         private readonly RobloxApi _api = new();
         private readonly HttpHandler _httpHandler = new();
@@ -55,7 +54,7 @@ namespace Shinystrap.Pages
                         Directory.Delete(robloxInstallmentPath, true);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     SnackbarHelper.ShowError("Error", "Error deleting Roblox Message");
                 }

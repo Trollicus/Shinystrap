@@ -49,7 +49,7 @@ public static class SnackbarHelper
 
         var dispatcher = application.Dispatcher;
 
-        void DoShow() => _service.Show(title, message, appearance, icon, timeout ?? DefaultTimeout);
+        void DoShow() => _service!.Show(title, message, appearance, icon, timeout ?? DefaultTimeout);
 
         if (dispatcher.CheckAccess())
         {
