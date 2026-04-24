@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Trollicus")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Roblox custom launcher")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+95f160a9b7e466764a52d67678fdd202fed641eb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4281b37d2540f07bff71f48946043c93fae6db00")]
 [assembly: System.Reflection.AssemblyProductAttribute("Shinystrap")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Shinystrap")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

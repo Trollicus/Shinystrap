@@ -127,7 +127,7 @@ public sealed class RobloxManager
 
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        if (GameHistory.Count == 0 || GameHistory[0].Description != $"Place ID: {placeId}")
+                        if (GameHistory.All(x => x.PlaceId != placeId))
                         {
                             GameHistory.Insert(0, new GameHistory.GameHistoryItem
                             {
