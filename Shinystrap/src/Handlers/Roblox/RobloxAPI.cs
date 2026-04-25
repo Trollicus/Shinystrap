@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32;
 using Shinystrap.Handlers.Web;
 
@@ -33,5 +34,57 @@ public class RobloxApi
         var version = versionElement.GetString();
 
         return !string.IsNullOrWhiteSpace(version) ? version : throw new InvalidOperationException("Roblox version response did not contain a valid clientVersionUpload value.");
+    }
+    
+    private async Task<string?> GetCsrfToken(string? cookie)
+    {
+        var request = await _handler.SendAsync("https://auth.roblox.com/v1/authentication-ticket", HttpMethod.Post, new[]
+        {
+            new HttpHandler.RequestHeadersEx("Referer", "https://www.roblox.com/"),
+            new HttpHandler.RequestHeadersEx("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0"),
+            new HttpHandler.RequestHeadersEx("Cookie", $".ROBLOSECURITY={cookie}")
+        });
+
+        request.Headers.TryGetValues("X-CSRF-TOKEN", out var headerValues);
+        
+        var headerValue = headerValues.FirstOrDefault();
+
+        return headerValue;
+    }
+    
+    private async Task<string?> ClientAssertion(string cookie)
+    {
+        var request = await _handler.SendAsync("https://auth.roblox.com/v1/client-assertion/", HttpMethod.Get, new[]
+        {
+            new HttpHandler.RequestHeadersEx("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"),
+            new HttpHandler.RequestHeadersEx("Cookie", $".ROBLOSECURITY={cookie}")
+        });
+
+        var response = await request.Content.ReadAsStringAsync();
+        
+        var deserialize = JsonSerializer.Deserialize<asd>(response);
+
+        return deserialize?.ClientAssertion;
+    }
+    
+    public class asd
+    {
+        [JsonPropertyName("clientAssertion")]
+        public string? ClientAssertion { get; set; }
+    }
+    
+    public async Task<string?> GetAuthenticationTicketAsync(string? cookie)
+    {
+        var request = await _handler.SendAsync("https://auth.roblox.com/v1/authentication-ticket", HttpMethod.Post, $"{{ \"clientAssertion\": \"{await ClientAssertion(cookie) }\" }}",new[]
+        {
+            new HttpHandler.RequestHeadersEx("Referer", "https://www.roblox.com/"),
+            new HttpHandler.RequestHeadersEx("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0"),
+            new HttpHandler.RequestHeadersEx("X-CSRF-TOKEN", await GetCsrfToken(cookie)),
+            new HttpHandler.RequestHeadersEx("Cookie", $".ROBLOSECURITY={cookie}")
+        });
+
+        //Console.WriteLine("GetAuthTicket: " + await request.Content.ReadAsStringAsync());
+        
+        return request.Headers.GetValues("rbx-authentication-ticket").FirstOrDefault();
     }
 }

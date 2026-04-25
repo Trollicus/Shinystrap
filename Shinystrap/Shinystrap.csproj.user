@@ -5,9 +5,6 @@
     <Compile Update="src\Pages\Addons.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="src\Pages\CookieWindow.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="src\Pages\FastFlagsEditor.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

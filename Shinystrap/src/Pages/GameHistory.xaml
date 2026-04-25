@@ -10,7 +10,7 @@
       Title="AccountManager">
 
     <Page.Resources>
-        
+
         <DataTemplate x:Key="GameHistoryTemplate">
             <ui:CardControl Margin="10,8,10,0" VerticalAlignment="Top">
 
@@ -50,10 +50,24 @@
 
         <ScrollViewer VerticalAlignment="Top"
                       Margin="10,68,10,0"
-                      VerticalScrollBarVisibility="Auto" Height="392">
+                      VerticalScrollBarVisibility="Auto" Height="352">
             <ItemsControl x:Name="HistoryPanel"
                           ItemTemplate="{StaticResource GameHistoryTemplate}" />
         </ScrollViewer>
-        
+        <ui:Button x:Name="LoginBtn" Content="Login"
+            Foreground="White"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Width="113"
+            Height="35"
+            Margin="0,0,10,10" Click="Login_Click"/>
+        <ui:Button x:Name="LogoutBtn" Content="Logout"
+            Foreground="White"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Width="113"
+            Height="35"
+            Margin="0,0,128,10" Click="Logout_Click"/>
+
     </Grid>
 </Page>
