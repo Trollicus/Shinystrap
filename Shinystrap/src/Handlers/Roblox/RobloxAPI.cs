@@ -62,15 +62,11 @@ public class RobloxApi
 
         var response = await request.Content.ReadAsStringAsync();
         
-        var deserialize = JsonSerializer.Deserialize<asd>(response);
+        using var document = JsonDocument.Parse(response);
 
-        return deserialize?.ClientAssertion;
-    }
-    
-    public class asd
-    {
-        [JsonPropertyName("clientAssertion")]
-        public string? ClientAssertion { get; set; }
+        var clientAssertion = document.RootElement.GetProperty("clientAssertion").ToString();
+        
+        return clientAssertion;
     }
     
     public async Task<string?> GetAuthenticationTicketAsync(string? cookie)
@@ -86,5 +82,20 @@ public class RobloxApi
         //Console.WriteLine("GetAuthTicket: " + await request.Content.ReadAsStringAsync());
         
         return request.Headers.GetValues("rbx-authentication-ticket").FirstOrDefault();
+    }
+
+    public async Task<string> GetCurrentRobloxChannel()
+    {
+        var request =
+            await _handler.SendAsync("https://clientsettings.roblox.com/v2/user-channel?binaryType=WindowsPlayer",
+                HttpMethod.Get);
+
+        var response = await request.Content.ReadAsStringAsync();
+        
+        using var document = JsonDocument.Parse(response);
+
+        var channelName = document.RootElement.GetProperty("channelName").ToString();
+
+        return channelName;
     }
 }

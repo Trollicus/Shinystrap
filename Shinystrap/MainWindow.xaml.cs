@@ -43,6 +43,9 @@ public partial class MainWindow
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
     
+    //TODO: Channel changer and roblox player sniper
+    //https://clientsettings.roblox.com/v2/user-channel?binaryType=WindowsPlayer
+    
     private async Task ChecksAsync()
     {
         while (true)
@@ -59,6 +62,7 @@ public partial class MainWindow
 
             await Task.Delay(TimeSpan.FromMinutes(10));
         }
+        // ReSharper disable once FunctionNeverReturns
     }
     
     private async Task<bool> HasInternet()

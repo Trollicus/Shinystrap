@@ -1,16 +1,18 @@
-﻿using System.Diagnostics;
+﻿using CommunityToolkit.WinUI.Notifications;
+using Shinystrap.Handlers.Roblox;
+using Shinystrap.Handlers.Shinystrap;
+using Shinystrap.Handlers.Web;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
-using CommunityToolkit.WinUI.Notifications;
-using Shinystrap.Handlers.Roblox;
-using Shinystrap.Handlers.Shinystrap;
-using Shinystrap.Handlers.Web;
+using System.Windows.Input;
 
 namespace Shinystrap.Pages
 {
+    //TODO: Please somebody fucking fix the mouse wheel scroll ts doesn't work sob
     public partial class Addons
     {
         private readonly RobloxApi _api = new();
@@ -21,11 +23,12 @@ namespace Shinystrap.Pages
         private Mutex? _mutex2;
         private string? _lastNotifiedIp;
         
+        
         public Addons()
         {
             InitializeComponent();
         }
-
+        
         private async void ReInstall_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -222,5 +225,13 @@ namespace Shinystrap.Pages
             _mutex2?.Close();
             _mutex2 = null;
         }
+
+        private async void Addons_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var channel = await _api.GetCurrentRobloxChannel();
+            
+            CurrentChannel.Text = $"Current Channel: {channel}";
+        }
+        
     }
 }

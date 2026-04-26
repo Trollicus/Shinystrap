@@ -4,6 +4,10 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Web;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
 using Shinystrap.Handlers.Roblox;
 
 namespace Shinystrap;
@@ -14,6 +18,12 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        EventManager.RegisterClassHandler(
+            typeof(UIElement),
+            UIElement.PreviewMouseWheelEvent,
+            new MouseWheelEventHandler(OnGlobalPreviewMouseWheel),
+            true);
+        
         if (e.Args.Length == 0)
         {
             return;
@@ -21,6 +31,70 @@ public partial class App : Application
 
         _ = HandleProtocolLaunchAsync(e.Args)
             .ContinueWith(_ => Dispatcher.Invoke(Shutdown));
+    }
+    
+    //Thanks to JetBrains Rider AI on this one lol
+    private static void OnGlobalPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source)
+        {
+            return;
+        }
+
+        if (FindAncestor<TextBoxBase>(source) is not null)
+        {
+            return;
+        }
+
+        const double scrollMultiplier = 1.0;
+
+        var current = source;
+        ScrollViewer? targetScrollViewer = null;
+
+        while (current is not null)
+        {
+            if (current is ScrollViewer sv && sv.ScrollableHeight > 0)
+            {
+                targetScrollViewer = sv;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        if (targetScrollViewer is null)
+        {
+            return;
+        }
+
+        var delta = e.Delta * scrollMultiplier;
+        var newOffset = targetScrollViewer.VerticalOffset - delta;
+
+        if (newOffset < 0)
+        {
+            newOffset = 0;
+        }
+        else if (newOffset > targetScrollViewer.ScrollableHeight)
+        {
+            newOffset = targetScrollViewer.ScrollableHeight;
+        }
+
+        targetScrollViewer.ScrollToVerticalOffset(newOffset);
+        e.Handled = true;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+    {
+        while (current is not null)
+        {
+            if (current is T typed)
+            {
+                return typed;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     private async Task HandleProtocolLaunchAsync(string[] args)
