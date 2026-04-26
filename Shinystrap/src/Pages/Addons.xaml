@@ -8,16 +8,7 @@
       d:DesignWidth="695"
       Title="Addons"
       Loaded="Addons_OnLoaded">
-
-    <Page.Resources>
-        <ResourceDictionary>
-            <StackPanel x:Key="DialogContent">
-                <TextBlock Text="Are you sure you want to proceed?" TextWrapping="Wrap" />
-                <CheckBox Content="Don't ask me again." />
-            </StackPanel>
-        </ResourceDictionary>
-    </Page.Resources>
-
+    
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10,30,10,30" Background="Transparent">
 
