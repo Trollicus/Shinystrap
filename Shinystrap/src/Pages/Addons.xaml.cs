@@ -232,6 +232,34 @@ namespace Shinystrap.Pages
             
             CurrentChannel.Text = $"Current Channel: {channel}";
         }
-        
+
+        private async void ChangeChanel_OnClick(object sender, RoutedEventArgs e)
+        {
+            var verifiedInstallation = await _api.GetVerifiedInstallation(SetChannel.Text);
+            
+            if (verifiedInstallation == "Error")
+            {
+                SnackbarHelper.ShowError("Error", "Failed to change channel, Channel either private or incorrect");
+                return;
+            }
+            
+            //TODO: maybe check if it's already installed lol
+            
+            SnackbarHelper.ShowSuccess("Success", $"{verifiedInstallation}");
+            
+            var tempRoot = Path.Combine(Path.GetTempPath(), "Shinystrap", Guid.NewGuid().ToString("N"));
+            var installerPath = Path.Combine(tempRoot, "RobloxPlayerInstaller.exe");
+            
+            await _httpHandler.DownloadFileAsync(verifiedInstallation,
+                installerPath);
+            
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = installerPath,
+                UseShellExecute = true
+            });
+            
+            await _api.EditRobloxChannel(SetChannel.Text);
+        }
     }
 }

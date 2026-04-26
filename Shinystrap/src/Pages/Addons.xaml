@@ -8,7 +8,7 @@
       d:DesignWidth="695"
       Title="Addons"
       Loaded="Addons_OnLoaded">
-    
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10,30,10,30" Background="Transparent">
 
@@ -75,13 +75,28 @@
                                        TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
 
-                        <TextBox Grid.Column="2" Width="198" Margin="20,0,35,0" VerticalAlignment="Center" />
+                        <TextBox x:Name="SetChannel" Grid.Column="2" Width="198" Margin="20,0,35,0" VerticalAlignment="Center"/>
                     </Grid>
                 </Expander.Header>
 
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock x:Name="CurrentChannel" VerticalAlignment="Center" Foreground="White" />
-                </StackPanel>
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="CurrentChannel"
+                               Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+
+                    <Button Grid.Column="1"
+                            Content="Save"
+                            Width="93"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Click="ChangeChanel_OnClick"/>
+                </Grid>
+
             </Expander>
 
             <Expander HorizontalContentAlignment="Stretch" Padding="16,12" Margin="0,-15,0,25">
@@ -98,6 +113,8 @@
                             <TextBlock Text="Snipe a roblox player of your choice." Foreground="White" FontSize="12"
                                        TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
+
+
                     </Grid>
                 </Expander.Header>
                 <Grid Margin="0,10,0,0">
