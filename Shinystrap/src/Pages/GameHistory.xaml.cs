@@ -6,6 +6,7 @@ using PuppeteerSharp;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
 using Wpf.Ui.Controls;
+using MessageBox = System.Windows.MessageBox;
 using Page = System.Windows.Controls.Page;
 
 namespace Shinystrap.Pages
@@ -77,44 +78,61 @@ namespace Shinystrap.Pages
 
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
-            await new BrowserFetcher().DownloadAsync();
+            LoginBtn.IsEnabled = false;
 
-            await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+            try
             {
-                Headless = false,
-                DefaultViewport = null
-            });
-
-            var page = await browser.NewPageAsync();
-            await page.GoToAsync("https://roblox.com/login");
-
-            var found = false;
-
-            do
-            {
-                var cookies = await page.GetCookiesAsync();
-                var authCookie = cookies.FirstOrDefault(c => c.Name == ".ROBLOSECURITY");
-
-                if (authCookie != null && !string.IsNullOrEmpty(authCookie.Value))
+                var fetcher = new BrowserFetcher();
+                await fetcher.DownloadAsync();
+                
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
-                    _robloSecurity = authCookie.Value;
-                    found = true;
+                    Headless = false,
+                    DefaultViewport = null
+                });
+                
+                var page = await browser.NewPageAsync();
+                await page.GoToAsync("https://roblox.com/login");
+                
+                var found = false;
+
+                do
+                {
+                    if (browser.IsClosed) break;
+                    
+                    var cookies = await page.GetCookiesAsync();
+                    var authCookie = cookies.FirstOrDefault(c => c.Name == ".ROBLOSECURITY");
+                    
+                    if (authCookie != null && !string.IsNullOrEmpty(authCookie.Value))
+                    {
+                        _robloSecurity = authCookie.Value;
+                        found = true;
+                    }
+                    else
+                    {
+                        await Task.Delay(1000);
+                    }
+                    
+                } while (!found);
+
+                if (found)
+                {
+                    RobloxManager.RobloxBiscuit = _robloSecurity;
+                    SnackbarHelper.ShowSuccess("Logged In", "Successfully logged in.");
+                    LogoutBtn.IsEnabled = true;
+                    await browser.CloseAsync();
                 }
                 else
                 {
-                    await Task.Delay(1000);
+                    LoginBtn.IsEnabled = true;
                 }
-
-                if (browser.IsClosed) return;
-
-            } while (!found);
-
-            
-            SnackbarHelper.ShowSuccess("Logged In", "Successfully logged in.");
-            LoginBtn.IsEnabled = false;
-            LogoutBtn.IsEnabled = true;
-            
-            await browser.CloseAsync();
+            }
+            catch(Exception exception)
+            {
+                SnackbarHelper.ShowError("Login Error", "Something went wrong.");
+                MessageBox.Show("Error", $"Show this to mod/owner: \n{exception.Message}");
+                LoginBtn.IsEnabled = true;
+            }
         }
 
         private void Logout_Click(object sender, RoutedEventArgs e)
@@ -123,7 +141,25 @@ namespace Shinystrap.Pages
             LogoutBtn.IsEnabled = false;
             LoginBtn.IsEnabled = true;
             
+            RobloxManager.RobloxBiscuit = string.Empty;
+            
             SnackbarHelper.ShowSuccess("Logged Out", "Successfully logged out.");
+        }
+
+        private void GameHistory_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var biscuit = RobloxManager.RobloxBiscuit;
+            
+            if (!string.IsNullOrEmpty(biscuit))
+            {
+                LoginBtn.IsEnabled = false;
+                LogoutBtn.IsEnabled = true;
+            }
+            else
+            {
+                LoginBtn.IsEnabled = true;
+                LogoutBtn.IsEnabled = false;
+            }
         }
     }
 }

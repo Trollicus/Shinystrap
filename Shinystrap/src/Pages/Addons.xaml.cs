@@ -8,11 +8,9 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Input;
 
 namespace Shinystrap.Pages
 {
-    //TODO: Please somebody fucking fix the mouse wheel scroll ts doesn't work sob
     public partial class Addons
     {
         private readonly RobloxApi _api = new();
@@ -235,6 +233,7 @@ namespace Shinystrap.Pages
 
         private async void ChangeChanel_OnClick(object sender, RoutedEventArgs e)
         {
+            SnackbarHelper.ShowInfo("Information", "The launcher won't work with channel different than live! ( until further notice )");
             var verifiedInstallation = await _api.GetVerifiedInstallation(SetChannel.Text);
             
             if (verifiedInstallation == "Error")
@@ -260,6 +259,39 @@ namespace Shinystrap.Pages
             });
             
             await _api.EditRobloxChannel(SetChannel.Text);
+        }
+
+        private async void SnipePlayer_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(SnipeUsername.Text) || string.IsNullOrEmpty(SnipePlaceId.Text))
+            {
+                SnackbarHelper.ShowError("Error", "Please enter a valid username and/or place id");
+                return;
+            }
+            
+            if (!long.TryParse(SnipePlaceId.Text, out _) || !long.TryParse(SnipeUsername.Text, out _))
+            {
+                SnackbarHelper.ShowError("Error", "Place and/or User ID must be a number.");
+                return;
+            }
+
+            var biscuit = RobloxManager.RobloxBiscuit;
+            if (string.IsNullOrEmpty(biscuit))
+            {
+                SnackbarHelper.ShowWarning("Warning", "Please login first in GameHistory before using this!");
+                return;
+            }
+            
+            SnipePlayerBtn.IsEnabled = false;
+            
+            var serverId = await _api.FindPlayerServer(SnipeUsername.Text, SnipePlaceId.Text, biscuit);
+            
+            if (!string.IsNullOrEmpty(serverId))
+            {
+                await _api.JoinServerThroughId(biscuit, SnipePlaceId.Text, serverId);
+            }
+            
+            SnipePlayerBtn.IsEnabled = true;
         }
     }
 }

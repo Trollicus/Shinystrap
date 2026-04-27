@@ -25,6 +25,8 @@ public sealed class RobloxManager
 
     public static ObservableCollection<RobloxInstances.RobloxInstance> ActiveInstances { get; } = [];
     public static ObservableCollection<GameHistory.GameHistoryItem> GameHistory { get; } = [];
+    
+    public static string? RobloxBiscuit = "";
 
     private static readonly DispatcherTimer ScanTimer;
     private static readonly HttpHandler HttpHandler = new();

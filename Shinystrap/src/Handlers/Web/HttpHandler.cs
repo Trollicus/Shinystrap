@@ -131,6 +131,8 @@ public sealed class HttpHandler : IDisposable
         return await _client.SendAsync(request, cts.Token);
     }
     
+    
+    
     public record RequestHeadersEx(string Key, string? Value);
     
     public void Dispose()
