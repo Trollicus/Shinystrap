@@ -75,11 +75,11 @@
                                        TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
 
-                        <TextBox x:Name="SetChannel" Grid.Column="2" Width="198" Margin="20,0,35,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="SetChannel" TextChanged="SetChannel_OnTextChanged" Grid.Column="2" Width="198" Margin="20,0,35,0" VerticalAlignment="Center"/>
                     </Grid>
                 </Expander.Header>
 
-                <Grid Margin="0,10,0,0">
+                <Grid Height="55">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -87,14 +87,24 @@
 
                     <TextBlock x:Name="CurrentChannel"
                                Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Foreground="White" />
+                               VerticalAlignment="Top"
+                               Foreground="White" Margin="0,8,0,0" />
+
+                    <TextBlock Text="Version: "
+                               Grid.Column="0"
+                               VerticalAlignment="Top"
+                               Foreground="White" Margin="0,28,488,0" />
 
                     <Button Grid.Column="1"
                             Content="Save"
                             Width="93"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center" Click="ChangeChanel_OnClick"/>
+
+                    <TextBlock x:Name="WrittenChannel"
+                        Grid.Column="0"
+                        VerticalAlignment="Top"
+                        Foreground="Gray" Margin="65,28,157,0" />
                 </Grid>
 
             </Expander>

@@ -14,7 +14,7 @@ namespace Shinystrap.Pages
     /// </summary>
     public partial class Settings
     {
-        private readonly string _version = "v1.0.0";
+        private const string Version = "v1.0.1";
         private readonly HttpHandler _handler = new();
         
         public Settings()
@@ -132,7 +132,7 @@ namespace Shinystrap.Pages
         {
             var appVersion = await _handler.GetStringAsync("https://raw.githubusercontent.com/Trollicus/Shinystrap/main/version.txt");
             
-            if (string.Equals(_version, appVersion.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Version, appVersion.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 SnackbarHelper.ShowSuccess("Shinystrap", "You're already on the latest version!");
                 return;

@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Shinystrap.Pages
 {
@@ -233,32 +234,15 @@ namespace Shinystrap.Pages
 
         private async void ChangeChanel_OnClick(object sender, RoutedEventArgs e)
         {
-            SnackbarHelper.ShowInfo("Information", "The launcher won't work with channel different than live! ( until further notice )");
-            var verifiedInstallation = await _api.GetVerifiedInstallation(SetChannel.Text);
-            
-            if (verifiedInstallation == "Error")
+            if (WrittenChannel.Text != "private version")
             {
-                SnackbarHelper.ShowError("Error", "Failed to change channel, Channel either private or incorrect");
-                return;
+                bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
+            
+                await _api.DownloadRobloxAsync(WrittenChannel.Text, isDefault, Directory.GetCurrentDirectory() + "\\RobloxApp.zip");
+
+                //TODO: Copy latest installed version files beside the files in that zip folder, create folder with that new channel version and place the files, gg?
+                await _api.EditRobloxChannel(SetChannel.Text);
             }
-            
-            //TODO: maybe check if it's already installed lol
-            
-            SnackbarHelper.ShowSuccess("Success", $"{verifiedInstallation}");
-            
-            var tempRoot = Path.Combine(Path.GetTempPath(), "Shinystrap", Guid.NewGuid().ToString("N"));
-            var installerPath = Path.Combine(tempRoot, "RobloxPlayerInstaller.exe");
-            
-            await _httpHandler.DownloadFileAsync(verifiedInstallation,
-                installerPath);
-            
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = installerPath,
-                UseShellExecute = true
-            });
-            
-            await _api.EditRobloxChannel(SetChannel.Text);
         }
 
         private async void SnipePlayer_OnClick(object sender, RoutedEventArgs e)
@@ -292,6 +276,36 @@ namespace Shinystrap.Pages
             }
             
             SnipePlayerBtn.IsEnabled = true;
+        }
+        
+        private CancellationTokenSource _cancellationTokenSource = new();
+
+        private async void SetChannel_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (WrittenChannel == null || SetChannel == null) return;
+            
+            await _cancellationTokenSource.CancelAsync();
+            _cancellationTokenSource.Dispose(); 
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource.Token;
+
+            try
+            {
+                await Task.Delay(200, token);
+                
+                bool isPrivate = await _api.IsChannelPrivate(SetChannel.Text);
+                var channelName = await _api.GetChannelVersion(SetChannel.Text);
+                
+                if (!token.IsCancellationRequested)
+                {
+                    WrittenChannel.Text = isPrivate ? "private version" : channelName;
+                }
+            }
+            catch (Exception ex)
+            {
+                // ignored
+            }
         }
     }
 }

@@ -123,40 +123,64 @@ public class RobloxApi
         return Task.CompletedTask;
     }
     
-    public async Task<string> GetVerifiedInstallation(string channelName)
+    public async Task<bool> IsChannelPrivate(string channelName)
     {
-        string channel = string.IsNullOrWhiteSpace(channelName) ? "live" : channelName;
-
+        var targetChannel = channelName.ToLower() == "production" ? "live" : channelName;
+        
         try
         {
             var request =
                 await _handler.SendAsync(
-                    $"https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer/channel/{channel}",
+                    $"https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer/channel/{targetChannel}/",
                     HttpMethod.Get);
-            
-            if (!request.IsSuccessStatusCode)
-               return "Error";
-            
-            var response = await request.Content.ReadAsStringAsync();
-            var root = JsonDocument.Parse(response).RootElement;
 
-            if (!root.TryGetProperty("clientVersionUpload", out var versionElement))
-            {
-                MessageBox.Show($"Show this to Mod/Owner: \n {response}");
-                return "Error";
-            }
+            var response = await request.Content.ReadAsStringAsync();
+            Console.WriteLine(response);
             
-            var clientVersion = versionElement.GetString();
-            var baseUrl = "https://setup.rbxcdn.com";
-            
-            return channel == "live"
-                ? $"{baseUrl}/{clientVersion}-RobloxPlayerLauncher.exe"
-                : $"{baseUrl}/channel/{channel}/{clientVersion}-RobloxPlayerLauncher.exe";
+            return !request.IsSuccessStatusCode;
         }
-        catch
+        catch(Exception)
         {
-            return "Error";
+            return true;
         }
+    }
+
+    
+    
+    public async Task<string> GetChannelVersion(string channelName)
+    {
+        bool isDefault = String.Compare(channelName, "production", StringComparison.OrdinalIgnoreCase) == 0;
+
+        var url = "https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer";
+        
+        if(!isDefault)
+            url += $"/channel/{channelName}";
+
+        try
+        {
+            var request = await _handler.SendAsync(url, HttpMethod.Get);
+            var response = await request.Content.ReadAsStringAsync();
+            Console.WriteLine(response);
+
+            var doc = JsonDocument.Parse(response);
+            var version = doc.RootElement.GetProperty("clientVersionUpload").ToString();
+
+            return version;
+        }
+        catch (Exception e)
+        {
+            return "NOT-FOUND";
+        }
+    }
+
+    public async Task DownloadRobloxAsync(string version, bool isDefault, string path)
+    {
+        var baseUrl = "https://setup.rbxcdn.com";
+    
+        if (!isDefault)
+            baseUrl += "/channel/common";
+
+        await _handler.DownloadFileAsync($"{baseUrl}/{version}-RobloxApp.zip", path);
     }
 
     private async Task<string> GetUserThumbnail(string userId)
