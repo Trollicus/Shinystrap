@@ -4,6 +4,7 @@ using Shinystrap.Handlers.Shinystrap;
 using Shinystrap.Handlers.Web;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -234,14 +235,56 @@ namespace Shinystrap.Pages
 
         private async void ChangeChanel_OnClick(object sender, RoutedEventArgs e)
         {
-            if (WrittenChannel.Text != "private version")
+            if (WrittenChannel.Text != "private version" && WrittenChannel.Text.Contains("version"))
             {
-                bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
-            
-                await _api.DownloadRobloxAsync(WrittenChannel.Text, isDefault, Directory.GetCurrentDirectory() + "\\RobloxApp.zip");
+                //there has to be better way of doing allat lol
+                var robloxPath =
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions",  WrittenChannel.Text);
 
-                //TODO: Copy latest installed version files beside the files in that zip folder, create folder with that new channel version and place the files, gg?
+                var robloxPath2 =
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions");
+                
+                var sourceFolder = new DirectoryInfo(robloxPath2)
+                    .GetDirectories()
+                    .Where(d => d.Name != WrittenChannel.Text)
+                    .OrderByDescending(d => d.LastWriteTime)
+                    .FirstOrDefault();
+                
+                if (Directory.Exists(robloxPath))
+                {
+                    SnackbarHelper.ShowWarning("Warning", "The roblox version already exists!");
+                    return;
+                }
+                
+                Directory.CreateDirectory(robloxPath);
+                
+                bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
+
+                var zipPath = robloxPath + "\\RobloxApp.zip";
+                
+                await _api.DownloadRobloxAsync(WrittenChannel.Text, isDefault, zipPath);
+                await ZipFile.ExtractToDirectoryAsync(zipPath, robloxPath, overwriteFiles: true);
+                File.Delete(zipPath);
+                
+                if (sourceFolder != null)
+                {
+                    foreach (string file in Directory.EnumerateFiles(sourceFolder.FullName, "*", SearchOption.AllDirectories))
+                    {
+                        string relativePath = Path.GetRelativePath(sourceFolder.FullName, file);
+                        string destFile = Path.Combine(robloxPath, relativePath);
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+
+                        if (!File.Exists(destFile))
+                            File.Copy(file, destFile);
+                    }
+                }
+                
                 await _api.EditRobloxChannel(SetChannel.Text);
+            }
+            else
+            {
+                SnackbarHelper.ShowWarning("Warning", "Invalid version!");
             }
         }
 
