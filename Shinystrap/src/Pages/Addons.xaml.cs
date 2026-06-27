@@ -230,6 +230,18 @@ namespace Shinystrap.Pages
         {
             var channel = await _api.GetCurrentRobloxChannel();
             CurrentChannel.Text = $"Current Channel: {channel}";
+
+            if (!Properties.Settings.Default.RuleExists)
+            {
+                ExistingRuleExpander.Visibility = Visibility.Collapsed;
+            }
+            if(Properties.Settings.Default.RuleExists && !string.IsNullOrEmpty(Properties.Settings.Default.RuleName))
+            {
+                ExistingRuleName.Text = Properties.Settings.Default.RuleName;
+                
+                var exitingIps = FetchRuleIps();
+                ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
+            }
         }
 
         private async void ChangeChanel_OnClick(object sender, RoutedEventArgs e)
@@ -352,18 +364,91 @@ namespace Shinystrap.Pages
 
         private void CreateFirewallRule_OnClick(object sender, RoutedEventArgs e)
         {
+            if (Properties.Settings.Default.RuleExists)
+            {
+                SnackbarHelper.ShowError("Error", "A rule already exists!");
+                return;
+            }
+            
             if (string.IsNullOrWhiteSpace(IpList.Text) || string.IsNullOrWhiteSpace(RuleName.Text)) return;
 
+            string ips = IpList.Text
+                .Split('\n')
+                .Select(ip => ip.Trim())
+                .Where(ip => !string.IsNullOrEmpty(ip))
+                .Aggregate((a, b) => $"{a},{b}");
+            
+            Console.WriteLine(ips.Trim());
+            
+           Process.Start(new ProcessStartInfo
+           {
+                FileName = "netsh",
+                Arguments =
+                    $"advfirewall firewall add rule name=\"{RuleName.Text}\" dir=out action=block remoteip={ips}",
+                Verb = "runas",
+                UseShellExecute = true
+           });
+           
+            Properties.Settings.Default.RuleName = RuleName.Text;
+            ExistingRuleName.Text = Properties.Settings.Default.RuleName;
+            Properties.Settings.Default.RuleExists = true;
+            
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+            
+            ExistingRuleExpander.Visibility = Visibility.Visible;
+
+            Task.Delay(500);
+            var exitingIps = FetchRuleIps();
+            ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
+            NavigationService?.Refresh();
+            
+            SnackbarHelper.ShowInfo("Success", "Successfully created firewall rule!");
+        }
+
+        private void DeleteRule_Click(object sender, RoutedEventArgs e)
+        {
             Process.Start(new ProcessStartInfo
             {
                 FileName = "netsh",
-                Arguments =
-                    $"advfirewall firewall add rule name=\"{RuleName.Text}\" dir=out action=block remoteip={IpList.Text.Trim()}",
+                Arguments = $"advfirewall firewall delete rule name=\"{Properties.Settings.Default.RuleName}\"",
                 Verb = "runas",
                 UseShellExecute = true
             });
             
-            SnackbarHelper.ShowInfo("Success", "Successfully created firewall rule!");
+            Properties.Settings.Default.RuleName = "";
+            Properties.Settings.Default.RuleExists = false;
+            ExistingRuleExpander.Visibility = Visibility.Hidden;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+            
+            NavigationService?.Refresh();
+        }
+
+        private string FetchRuleIps()
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = $"advfirewall firewall show rule name=\"{Properties.Settings.Default.RuleName}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            
+            // Parse the RemoteIP line
+            string ips = output
+                .Split('\n')
+                .FirstOrDefault(line => line.TrimStart().StartsWith("RemoteIP:"))
+                ?.Split(':')[1]
+                .Trim() ?? "";
+
+            return ips;
         }
     }
 }
