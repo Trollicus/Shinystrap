@@ -206,7 +206,7 @@ namespace Shinystrap.Pages
                 try
                 {
                     await CheckForUpdatesAsync();
-                    await Task.Delay(TimeSpan.FromSeconds(5), token);
+                    await Task.Delay(TimeSpan.FromMinutes(10), token);
                 }
                 catch (Exception exception)
                 {
@@ -225,6 +225,11 @@ namespace Shinystrap.Pages
         private void UpdateToggle_Unchecked(object sender, RoutedEventArgs e)
         {
             _updateCts.Cancel();
+        }
+
+        private void Settings_OnLoaded(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

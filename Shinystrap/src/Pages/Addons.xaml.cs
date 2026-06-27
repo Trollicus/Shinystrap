@@ -87,7 +87,7 @@ namespace Shinystrap.Pages
             {
                 return;
             }
-
+            
             _cts = new CancellationTokenSource();
             _ = WatchLogsAsync(_cts.Token);
         }
@@ -229,7 +229,6 @@ namespace Shinystrap.Pages
         private async void Addons_OnLoaded(object sender, RoutedEventArgs e)
         {
             var channel = await _api.GetCurrentRobloxChannel();
-            
             CurrentChannel.Text = $"Current Channel: {channel}";
         }
 
@@ -349,6 +348,22 @@ namespace Shinystrap.Pages
             {
                 // ignored
             }
+        }
+
+        private void CreateFirewallRule_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(IpList.Text) || string.IsNullOrWhiteSpace(RuleName.Text)) return;
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments =
+                    $"advfirewall firewall add rule name=\"{RuleName.Text}\" dir=out action=block remoteip={IpList.Text.Trim()}",
+                Verb = "runas",
+                UseShellExecute = true
+            });
+            
+            SnackbarHelper.ShowInfo("Success", "Successfully created firewall rule!");
         }
     }
 }

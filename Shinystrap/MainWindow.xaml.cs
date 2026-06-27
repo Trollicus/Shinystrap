@@ -3,6 +3,7 @@ using System.Security.Principal;
 using System.Windows;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
+using Shinystrap.Handlers.Shinystrap.Services;
 using Shinystrap.Handlers.Web;
 using Shinystrap.Pages;
 using Wpf.Ui;
@@ -23,6 +24,7 @@ public partial class MainWindow
 
     private async void FluentWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        MainNavigation.SetPageProviderService(new CachingPageService());
         MainNavigation.Navigate(typeof(Addons));
 
         if (!IsAdministrator())
