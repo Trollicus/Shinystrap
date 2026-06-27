@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Xml.Linq;
 
 namespace Shinystrap.Pages
 {
@@ -17,6 +18,9 @@ namespace Shinystrap.Pages
     {
         private readonly RobloxApi _api = new();
         private readonly HttpHandler _httpHandler = new();
+        
+        private readonly string _robloxSettingsFile =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "GlobalBasicSettings_13.xml");
 
         private CancellationTokenSource? _cts;
         private Mutex? _mutex1;
@@ -231,6 +235,8 @@ namespace Shinystrap.Pages
             var channel = await _api.GetCurrentRobloxChannel();
             CurrentChannel.Text = $"Current Channel: {channel}";
 
+            CurrentFPS.Text = GetFramerateCap().ToString();
+
             if (!Properties.Settings.Default.RuleExists)
             {
                 ExistingRuleExpander.Visibility = Visibility.Collapsed;
@@ -400,7 +406,6 @@ namespace Shinystrap.Pages
             Task.Delay(500);
             var exitingIps = FetchRuleIps();
             ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
-            NavigationService?.Refresh();
             
             SnackbarHelper.ShowInfo("Success", "Successfully created firewall rule!");
         }
@@ -421,6 +426,8 @@ namespace Shinystrap.Pages
             _ = Task.Run(() => Properties.Settings.Default.Save());
             
             NavigationService?.Refresh();
+            
+            SnackbarHelper.ShowInfo("Success", "Successfully DELETED firewall rule!");
         }
 
         private string FetchRuleIps()
@@ -449,6 +456,58 @@ namespace Shinystrap.Pages
                 .Trim() ?? "";
 
             return ips;
+        }
+
+        private void SaveRule_Click(object sender, RoutedEventArgs e)
+        {
+            string ips = ExistingIps.Text
+                .Split('\n')
+                .Select(ip => ip.Trim())
+                .Where(ip => !string.IsNullOrEmpty(ip))
+                .Aggregate((a, b) => $"{a},{b}");
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = $"advfirewall firewall set rule name=\"{Properties.Settings.Default.RuleName}\" new remoteip={ips}",
+                Verb = "runas",
+                UseShellExecute = true
+            });
+            
+            SnackbarHelper.ShowInfo("Success", "Successfully SAVED firewall rule!");
+        }
+
+        private void SaveFPSLimit_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(SetFPSValue.Text))
+            {
+                SnackbarHelper.ShowWarning("Warning", "Value cannot be null or empty!");
+                return;
+            }
+            
+            File.SetAttributes(_robloxSettingsFile, FileAttributes.Normal);
+
+            var doc = XDocument.Load(_robloxSettingsFile);
+            var element = doc.Descendants("int")
+                .FirstOrDefault(e => (string)e.Attribute("name") == "FramerateCap");
+
+            if (element != null)
+                element.Value = SetFPSValue.ToString() ?? "9999";
+
+            doc.Save(_robloxSettingsFile);
+
+            // Set back to readonly
+            File.SetAttributes(_robloxSettingsFile, FileAttributes.ReadOnly);
+        }
+
+        private int GetFramerateCap()
+        {
+            var doc = XDocument.Load(_robloxSettingsFile);
+            var value = doc.Descendants("int")
+                .FirstOrDefault(e => (string)e.Attribute("name") == "FramerateCap")
+                ?.Value;
+
+            return int.TryParse(value, out int cap) ? cap : 0;
         }
     }
 }
