@@ -3,6 +3,7 @@ using Shinystrap.Handlers.Roblox;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Windows;
 using System.Windows.Controls;
 using Shinystrap.Handlers.Shinystrap;
 
@@ -49,7 +50,7 @@ namespace Shinystrap.Pages
             }
         }
 
-        private void AddFlag_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void AddFlag_Click(object sender, RoutedEventArgs e)
         {
             var newItem = new FlagItem { Key = "Name", Value = "Value" };
             Items.Add(newItem);
@@ -60,13 +61,13 @@ namespace Shinystrap.Pages
             FlagsDataGrid.BeginEdit();
         }
 
-        private void DeleteFlag_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void DeleteFlag_Click(object sender, RoutedEventArgs e)
         {
             if (FlagsDataGrid.SelectedItem is FlagItem selected)
                 Items.Remove(selected);
         }
 
-        private void Export_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void Export_Click(object sender, RoutedEventArgs e)
         {
             if (Items.Count == 0) return;
 
@@ -83,7 +84,7 @@ namespace Shinystrap.Pages
             File.WriteAllText(dialog.FileName, json);
         }
 
-        private void Import_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void Import_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFileDialog
             {
@@ -110,12 +111,13 @@ namespace Shinystrap.Pages
             }
         }
 
-        private async void Save_Click(object sender, System.Windows.RoutedEventArgs e)
+        public RobloxApi Api = new();
+
+        private async void Save_Click(object sender, RoutedEventArgs e)
         {
             await CreateFFlagsFile();
-
-            var api = new RobloxApi();
-            var currentVersion = await api.GetRobloxVersionAsync();
+            
+            var currentVersion = await Api.GetRobloxVersionAsync();
 
             var filePath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -124,30 +126,45 @@ namespace Shinystrap.Pages
                 "ClientSettings",
                 "ClientAppSettings.json");
             
-            Dictionary<string, object> existing = new();
-            
-            var fileContent = await File.ReadAllTextAsync(filePath);
-            if (!string.IsNullOrWhiteSpace(fileContent))
+            var dict = Items.ToDictionary(x => x.Key, x => x.Value);
+
+            var json = JsonSerializer.Serialize(dict, new JsonSerializerOptions
             {
-                var parsed = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(fileContent);
-                if (parsed != null)
-                {
-                    foreach (var kvp in parsed)
-                    {
-                        existing[kvp.Key] = kvp.Value.ValueKind switch
-                        {
-                            JsonValueKind.Number => kvp.Value.GetUInt32(),
-                            _ => kvp.Value.GetString() ?? string.Empty
-                        };
-                    }
-                }
-            }
+                WriteIndented = true
+            });
 
-            foreach (var item in Items)
-                existing[item.Key] = item.Value;
-
-            var json = JsonSerializer.Serialize(existing, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(filePath, json);
+
+            SnackbarHelper.ShowInfo("Success!", "Successfully saved Fast Flags!");
+        }
+
+        private async void FastFlagsEditor_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var filePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Roblox",
+                await Api.GetRobloxVersionAsync(),
+                "ClientSettings",
+                "ClientAppSettings.json");
+
+            if (!File.Exists(filePath)) return;
+            var json = await File.ReadAllTextAsync(filePath);
+
+            Console.WriteLine(json);
+                
+            var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            if (dict == null) return;
+
+            Items.Clear();
+
+            foreach (var kvp in dict)
+            {
+                Items.Add(new FlagItem
+                {
+                    Key = kvp.Key,
+                    Value = kvp.Value
+                });
+            }
         }
     }
 }

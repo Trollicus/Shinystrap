@@ -7,7 +7,8 @@
       mc:Ignorable="d" 
       d:DesignWidth="695"
       d:DesignHeight="470"
-      Title="FastFlagsEditor">
+      Title="FastFlagsEditor"
+      Loaded="FastFlagsEditor_OnLoaded">
 
     <Grid>
         <TextBlock Text="Fast Flags" Foreground="White" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,18,0,0"/>
