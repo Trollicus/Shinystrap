@@ -33,6 +33,11 @@ public partial class MainWindow
             await Task.Delay(TimeSpan.FromMinutes(1));
             Environment.Exit(0);
         }
+
+        if (Properties.Settings.Default.ExpFeatures)
+        {
+            HiddenFeatures.Visibility = Visibility.Visible;
+        }
         
         _ = ChecksAsync();
     }

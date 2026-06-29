@@ -407,7 +407,7 @@ namespace Shinystrap.Pages
             var exitingIps = FetchRuleIps();
             ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
             
-            SnackbarHelper.ShowInfo("Success", "Successfully created firewall rule!");
+            SnackbarHelper.ShowSuccess("Success", "Successfully created firewall rule!");
         }
 
         private void DeleteRule_Click(object sender, RoutedEventArgs e)
@@ -427,7 +427,7 @@ namespace Shinystrap.Pages
             
             NavigationService?.Refresh();
             
-            SnackbarHelper.ShowInfo("Success", "Successfully DELETED firewall rule!");
+            SnackbarHelper.ShowSuccess("Success", "Successfully DELETED firewall rule!");
         }
 
         private string FetchRuleIps()
@@ -474,7 +474,7 @@ namespace Shinystrap.Pages
                 UseShellExecute = true
             });
             
-            SnackbarHelper.ShowInfo("Success", "Successfully SAVED firewall rule!");
+            SnackbarHelper.ShowSuccess("Success", "Successfully SAVED firewall rule!");
         }
 
         private void SaveFPSLimit_OnClick(object sender, RoutedEventArgs e)
@@ -489,22 +489,23 @@ namespace Shinystrap.Pages
 
             var doc = XDocument.Load(_robloxSettingsFile);
             var element = doc.Descendants("int")
-                .FirstOrDefault(e => (string)e.Attribute("name") == "FramerateCap");
+                .FirstOrDefault(xElement => (string)xElement.Attribute("name")! == "FramerateCap");
 
-            if (element != null)
-                element.Value = SetFPSValue.ToString() ?? "9999";
+            element?.Value = SetFPSValue.ToString() ?? "9999";
 
             doc.Save(_robloxSettingsFile);
 
             // Set back to readonly
             File.SetAttributes(_robloxSettingsFile, FileAttributes.ReadOnly);
+            
+            SnackbarHelper.ShowSuccess("Success", "Successfully Set FPS Limit");
         }
 
         private int GetFramerateCap()
         {
             var doc = XDocument.Load(_robloxSettingsFile);
             var value = doc.Descendants("int")
-                .FirstOrDefault(e => (string)e.Attribute("name") == "FramerateCap")
+                .FirstOrDefault(e => (string)e.Attribute("name")! == "FramerateCap")
                 ?.Value;
 
             return int.TryParse(value, out int cap) ? cap : 0;

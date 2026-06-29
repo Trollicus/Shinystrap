@@ -66,6 +66,23 @@
             Height="38"
             Margin="0,0,157,10" Click="UnInstall_OnClick">
         </ui:Button>
+        <ui:CardControl Margin="10,212,10,0" VerticalAlignment="Top">
+            <ui:CardControl.Icon>
+                <ui:SymbolIcon Symbol="Bug24" />
+            </ui:CardControl.Icon>
+
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" >
+                        <TextBlock Text="Experimental Features" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <TextBlock  Text="Experimental features. May contain bugs" Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+            </ui:CardControl.Header>
+
+            <ui:ToggleSwitch  VerticalAlignment="Center" Checked="ExpFeatures_Checked" Unchecked="ExpFeatures_OnUnchecked"/>
+
+        </ui:CardControl>
 
     </Grid>
 </Page>

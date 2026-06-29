@@ -46,5 +46,17 @@ namespace Shinystrap.Properties {
                 this["RuleExists"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ExpFeatures {
+            get {
+                return ((bool)(this["ExpFeatures"]));
+            }
+            set {
+                this["ExpFeatures"] = value;
+            }
+        }
     }
 }

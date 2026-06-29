@@ -231,5 +231,27 @@ namespace Shinystrap.Pages
         {
 
         }
+
+        private void ExpFeatures_Checked(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current.MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.HiddenFeatures.Visibility = Visibility.Visible;
+            }
+
+            Properties.Settings.Default.ExpFeatures = true;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+        }
+
+        private void ExpFeatures_OnUnchecked(object sender, RoutedEventArgs e)
+        {
+            if (Application.Current.MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.HiddenFeatures.Visibility = Visibility.Hidden;
+            }
+            
+            Properties.Settings.Default.ExpFeatures = false;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+        }
     }
 }

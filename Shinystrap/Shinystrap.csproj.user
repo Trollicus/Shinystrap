@@ -8,6 +8,9 @@
     <Compile Update="src\Pages\FastFlagsEditor.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="src\Pages\GameList.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="src\Pages\RobloxInstances.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -115,6 +115,13 @@
                         </ui:NavigationViewItem.Icon>
                     </ui:NavigationViewItem>
 
+                    <ui:NavigationViewItem x:Name="HiddenFeatures" Content="Hidden Features"
+                               TargetPageType="{x:Type pages1:GameList}" Visibility="Hidden">
+                        <ui:NavigationViewItem.Icon>
+                            <ui:SymbolIcon Symbol="Feed32" />
+                        </ui:NavigationViewItem.Icon>
+                    </ui:NavigationViewItem>
+
                 </ui:NavigationView.MenuItems>  
 
                 <ui:NavigationView.FooterMenuItems>
