@@ -53,7 +53,7 @@ namespace Shinystrap.Pages
             {
                 if (string.IsNullOrEmpty(RobloxManager.RobloxBiscuit))
                 {
-                    SnackbarHelper.ShowWarning("Warning", "Please login first in GameHistory before using the Join!");
+                    SnackbarHelper.ShowWarning("Warning", "Please add account in Account Manager before using the Join!");
                     return;
                 }
                 

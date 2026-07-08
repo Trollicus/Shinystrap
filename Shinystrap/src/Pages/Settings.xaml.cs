@@ -229,7 +229,8 @@ namespace Shinystrap.Pages
 
         private void Settings_OnLoaded(object sender, RoutedEventArgs e)
         {
-
+            CurrentVersion.Text = Version;
+            ExpFeaturesToggle.IsChecked = Properties.Settings.Default.ExpFeatures;
         }
 
         private void ExpFeatures_Checked(object sender, RoutedEventArgs e)

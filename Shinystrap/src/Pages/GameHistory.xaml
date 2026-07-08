@@ -7,8 +7,7 @@
       mc:Ignorable="d" 
       d:DesignWidth="695"
       d:DesignHeight="470"
-      Title="AccountManager"
-      Loaded="GameHistory_OnLoaded">
+      Title="AccountManager">
 
     <Page.Resources>
 
@@ -55,20 +54,6 @@
             <ItemsControl x:Name="HistoryPanel"
                           ItemTemplate="{StaticResource GameHistoryTemplate}" />
         </ScrollViewer>
-        <ui:Button x:Name="LoginBtn" Content="Login"
-            Foreground="White"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Width="113"
-            Height="35"
-            Margin="0,0,10,10" Click="Login_Click"/>
-        <ui:Button x:Name="LogoutBtn" Content="Logout"
-            Foreground="White"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Width="113"
-            Height="35"
-            Margin="0,0,128,10" Click="Logout_Click"/>
 
     </Grid>
 </Page>

@@ -12,77 +12,102 @@
       Loaded="Settings_OnLoaded">
 
     <Grid>
-        <TextBlock Text="Settings" Foreground="White" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,18,0,0"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <ui:CardControl Margin="10,60,10,0" VerticalAlignment="Top">
-            <ui:CardControl.Icon>
-                <ui:SymbolIcon Symbol="PhoneUpdate24" />
-            </ui:CardControl.Icon>
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="10,30,10,10" Background="Transparent">
 
-            <ui:CardControl.Header>
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" >
-                        <TextBlock Text="Check Update" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <TextBlock  Text="Checks whether Shinstrap has update" Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
-                </StackPanel>
-            </ui:CardControl.Header>
+                <TextBlock Text="Settings" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10" />
 
-            <ui:Button Content="Update" Foreground="White" Width="83" Click="CheckUpdate_OnClick"/>
+                <Expander HorizontalContentAlignment="Stretch" Padding="16,12" Margin="0,0,0,10">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="Auto, *, Auto">
+                            <ui:SymbolIcon Grid.Column="0"
+                                           Symbol="PhoneUpdate24"
+                                           FontSize="24"
+                                           Margin="0,0,12,0"
+                                           VerticalAlignment="Center" />
 
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Check Update" FontWeight="SemiBold" />
+                                <TextBlock Text="Checks whether Shinstrap has update" Foreground="White" FontSize="12"
+                                           TextWrapping="Wrap" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
 
-        </ui:CardControl>
-        <ui:CardControl Margin="10,136,10,0" VerticalAlignment="Top">
-            <ui:CardControl.Icon>
-                <ui:SymbolIcon Symbol="PhoneUpdateCheckmark20" />
-            </ui:CardControl.Icon>
+                    <Grid Height="50">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-            <ui:CardControl.Header>
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" >
-                        <TextBlock Text="Auto Updater" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <TextBlock  Text="Automatically checks and updates in the background." Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
-                </StackPanel>
-            </ui:CardControl.Header>
+                        <TextBlock Text="Current Version: "
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Foreground="White" Margin="10,0,428,0" />
 
-            <ui:ToggleSwitch x:Name="UpdateToggle" VerticalAlignment="Center" Checked="UpdateToggle_Checked" Unchecked="UpdateToggle_Unchecked"/>
+                        <Button Grid.Column="1"
+                                Content="Update"
+                                Width="93"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center" Click="CheckUpdate_OnClick"/>
 
-        </ui:CardControl>
-        <ui:Button Content="Initialize"
-            Foreground="White"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Width="142"
-            Height="38"
-            Margin="0,0,10,10"
-            Click="Initialize_OnClick">
-        </ui:Button>
-        <ui:Button Content="Uninstall"
-            Foreground="White"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Width="130"
-            Height="38"
-            Margin="0,0,157,10" Click="UnInstall_OnClick">
-        </ui:Button>
-        <ui:CardControl Margin="10,212,10,0" VerticalAlignment="Top">
-            <ui:CardControl.Icon>
-                <ui:SymbolIcon Symbol="Bug24" />
-            </ui:CardControl.Icon>
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Foreground="White" Margin="120,0,323,0" x:Name="CurrentVersion"/>
 
-            <ui:CardControl.Header>
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" >
-                        <TextBlock Text="Experimental Features" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <TextBlock  Text="Experimental features. May contain bugs" Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
-                </StackPanel>
-            </ui:CardControl.Header>
+                    </Grid>
+                </Expander>
 
-            <ui:ToggleSwitch  VerticalAlignment="Center" Checked="ExpFeatures_Checked" Unchecked="ExpFeatures_OnUnchecked"/>
+                <ui:CardControl Margin="0,0,0,10">
+                    <ui:CardControl.Icon>
+                        <ui:SymbolIcon Symbol="PhoneUpdateCheckmark20" />
+                    </ui:CardControl.Icon>
 
-        </ui:CardControl>
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock Text="Auto Updater" FontWeight="SemiBold"/>
+                            <TextBlock Text="Automatically checks and updates in the background." Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
 
+                    <ui:ToggleSwitch x:Name="UpdateToggle" VerticalAlignment="Center" Checked="UpdateToggle_Checked" Unchecked="UpdateToggle_Unchecked"/>
+                </ui:CardControl>
+
+                <ui:CardControl Margin="0,0,0,10">
+                    <ui:CardControl.Icon>
+                        <ui:SymbolIcon Symbol="Bug24" />
+                    </ui:CardControl.Icon>
+
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock Text="Experimental Features" FontWeight="SemiBold"/>
+                            <TextBlock Text="Experimental features. May contain bugs" Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+
+                    <ui:ToggleSwitch x:Name="ExpFeaturesToggle" VerticalAlignment="Center" Checked="ExpFeatures_Checked" Unchecked="ExpFeatures_OnUnchecked"/>
+                </ui:CardControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,10,10">
+            <ui:Button Content="Uninstall"
+                Foreground="White"
+                Width="130"
+                Height="38"
+                Margin="0,0,10,0" Click="UnInstall_OnClick"/>
+            <ui:Button Content="Initialize"
+                Foreground="White"
+                Width="142"
+                Height="38"
+                Click="Initialize_OnClick"/>
+        </StackPanel>
     </Grid>
 </Page>

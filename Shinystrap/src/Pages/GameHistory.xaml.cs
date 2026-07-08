@@ -24,7 +24,6 @@ namespace Shinystrap.Pages
         {
             InitializeComponent();
             HistoryPanel.ItemsSource = RobloxManager.GameHistory;
-            LogoutBtn.IsEnabled = false;
         }
         
         private async void JoinGame_OnClick(object sender, RoutedEventArgs e)
@@ -43,9 +42,11 @@ namespace Shinystrap.Pages
                 return;
             }
 
-            if (_robloSecurity is null)
+            var robloSecurity = RobloxManager.RobloxBiscuit;
+            
+            if (string.IsNullOrEmpty(robloSecurity))
             {
-                SnackbarHelper.ShowWarning("Warning", "please login first!");
+                SnackbarHelper.ShowWarning("Warning", "Please add account in Account Manager!");
                 return;
             }
             
@@ -65,7 +66,7 @@ namespace Shinystrap.Pages
                 FileName = Path.Combine(robloxPath +
                                         $@"\Versions\{currentVersion}\RobloxPlayerBeta.exe"),
                 Arguments =
-                    $"--app -t {await api.GetAuthenticationTicketAsync(_robloSecurity)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={gameHistory.PlaceId} -LaunchExp InApp"
+                    $"--app -t {await api.GetAuthenticationTicketAsync(robloSecurity)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={gameHistory.PlaceId} -LaunchExp InApp"
             });
         }
         
@@ -73,93 +74,6 @@ namespace Shinystrap.Pages
         {
             return ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds();
         }
-
-        private string? _robloSecurity;
-
-        private async void Login_Click(object sender, RoutedEventArgs e)
-        {
-            LoginBtn.IsEnabled = false;
-
-            try
-            {
-                var fetcher = new BrowserFetcher();
-                await fetcher.DownloadAsync();
-                
-                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
-                {
-                    Headless = false,
-                    DefaultViewport = null
-                });
-                
-                var page = await browser.NewPageAsync();
-                await page.GoToAsync("https://roblox.com/login");
-                
-                var found = false;
-
-                do
-                {
-                    if (browser.IsClosed) break;
-                    
-                    var cookies = await page.GetCookiesAsync();
-                    var authCookie = cookies.FirstOrDefault(c => c.Name == ".ROBLOSECURITY");
-                    
-                    if (authCookie != null && !string.IsNullOrEmpty(authCookie.Value))
-                    {
-                        _robloSecurity = authCookie.Value;
-                        found = true;
-                    }
-                    else
-                    {
-                        await Task.Delay(1000);
-                    }
-                    
-                } while (!found);
-
-                if (found)
-                {
-                    RobloxManager.RobloxBiscuit = _robloSecurity;
-                    SnackbarHelper.ShowSuccess("Logged In", "Successfully logged in.");
-                    LogoutBtn.IsEnabled = true;
-                    await browser.CloseAsync();
-                }
-                else
-                {
-                    LoginBtn.IsEnabled = true;
-                }
-            }
-            catch(Exception exception)
-            {
-                SnackbarHelper.ShowError("Login Error", "Something went wrong.");
-                MessageBox.Show("Error", $"Show this to mod/owner: \n{exception.Message}");
-                LoginBtn.IsEnabled = true;
-            }
-        }
-
-        private void Logout_Click(object sender, RoutedEventArgs e)
-        {
-            _robloSecurity = string.Empty;
-            LogoutBtn.IsEnabled = false;
-            LoginBtn.IsEnabled = true;
-            
-            RobloxManager.RobloxBiscuit = string.Empty;
-            
-            SnackbarHelper.ShowSuccess("Logged Out", "Successfully logged out.");
-        }
-
-        private void GameHistory_OnLoaded(object sender, RoutedEventArgs e)
-        {
-            var biscuit = RobloxManager.RobloxBiscuit;
-            
-            if (!string.IsNullOrEmpty(biscuit))
-            {
-                LoginBtn.IsEnabled = false;
-                LogoutBtn.IsEnabled = true;
-            }
-            else
-            {
-                LoginBtn.IsEnabled = true;
-                LogoutBtn.IsEnabled = false;
-            }
-        }
+        
     }
 }
