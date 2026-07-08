@@ -14,7 +14,7 @@ namespace Shinystrap.Pages
     /// </summary>
     public partial class Settings
     {
-        private const string Version = "v1.0.2";
+        private const string Version = "v1.0.3";
         private readonly HttpHandler _handler = new();
         
         public Settings()
