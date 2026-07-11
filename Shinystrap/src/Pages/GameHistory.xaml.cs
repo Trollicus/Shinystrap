@@ -56,15 +56,18 @@ namespace Shinystrap.Pages
             if (await api.CheckForUpdatesAsync())
             {
                 SnackbarHelper.ShowWarning("Roblox", "Version mismatch! Please update your Roblox", TimeSpan.FromSeconds(5));
+                return;
             }
             
-            var robloxPath =
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox");
+            var robloxExe = Path.Combine(
+                Properties.Settings.Default.DefaultInstalledPath,
+                "Versions",
+                currentVersion,
+                "RobloxPlayerBeta.exe");
             
             Process.Start(new ProcessStartInfo
             {
-                FileName = Path.Combine(robloxPath +
-                                        $@"\Versions\{currentVersion}\RobloxPlayerBeta.exe"),
+                FileName = robloxExe,
                 Arguments =
                     $"--app -t {await api.GetAuthenticationTicketAsync(robloSecurity)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={gameHistory.PlaceId} -LaunchExp InApp"
             });

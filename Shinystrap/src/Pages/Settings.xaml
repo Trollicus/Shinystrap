@@ -12,11 +12,6 @@
       Loaded="Settings_OnLoaded">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="10,30,10,10" Background="Transparent">
 
@@ -72,7 +67,7 @@
                     <ui:CardControl.Header>
                         <StackPanel>
                             <TextBlock Text="Auto Updater" FontWeight="SemiBold"/>
-                            <TextBlock Text="Automatically checks and updates in the background." Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                            <TextBlock Text="Automatically checks Shinystrap for updates in the background." Foreground="White" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
                     </ui:CardControl.Header>
 
@@ -93,21 +88,48 @@
 
                     <ui:ToggleSwitch x:Name="ExpFeaturesToggle" VerticalAlignment="Center" Checked="ExpFeatures_Checked" Unchecked="ExpFeatures_OnUnchecked"/>
                 </ui:CardControl>
+                <Expander HorizontalContentAlignment="Stretch" Padding="16,12">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="Auto, *, Auto">
+                            <ui:SymbolIcon Grid.Column="0"
+                                Symbol="ArrowDownload24"
+                                FontSize="24"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center" />
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Initialize" FontWeight="SemiBold" />
+                                <TextBlock Text="Roblox will be installed there." Foreground="White" FontSize="12"
+                                    TextWrapping="Wrap" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+
+                    <Grid Height="50">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Path: "
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Foreground="White" Margin="10,0,498,0" />
+
+                        <Button Grid.Column="1"
+                            Content="Install"
+                            Width="93"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Click="InstallRoblox_OnClick"/>
+
+                        <TextBox x:Name="InstallationPath" Margin="50,5,10,0" VerticalAlignment="Top"/>
+
+                    </Grid>
+                </Expander>
 
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,10,10">
-            <ui:Button Content="Uninstall"
-                Foreground="White"
-                Width="130"
-                Height="38"
-                Margin="0,0,10,0" Click="UnInstall_OnClick"/>
-            <ui:Button Content="Initialize"
-                Foreground="White"
-                Width="142"
-                Height="38"
-                Click="Initialize_OnClick"/>
-        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="403,10,0,10" Width="282"/>
     </Grid>
 </Page>

@@ -268,7 +268,7 @@ public partial class AccountManager : Page
         return (user!.Name, user.Id);
     }
 
-    private async Task<string?> GetAccountAvatar(long id)
+    private async Task<string?> GetAccountAvatar(long id)//maybe use robloxapi's getuserthumbnail instead of ts
     {
         var request = await _handler.SendAsync(
             $"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={id}&size=150x150&format=Png&isCircular=true",

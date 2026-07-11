@@ -26,6 +26,7 @@ namespace Shinystrap.Pages
         
         private readonly HttpHandler _httpHandler = new();
         private List<GameCard> _allCards = new();
+        private RobloxApi _api = new();
         
         public GameList()
         {
@@ -66,15 +67,18 @@ namespace Shinystrap.Pages
                 if (await api.CheckForUpdatesAsync())
                 {
                     SnackbarHelper.ShowWarning("Roblox", "Version mismatch! Please update your Roblox", TimeSpan.FromSeconds(5));
+                    return;
                 }
-            
-                var robloxPath =
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox");
-            
+                
+                var robloxExe = Path.Combine(
+                    Properties.Settings.Default.DefaultInstalledPath,
+                    "Versions",
+                    currentVersion,
+                    "RobloxPlayerBeta.exe");
+                
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = Path.Combine(robloxPath +
-                                            $@"\Versions\{currentVersion}\RobloxPlayerBeta.exe"),
+                    FileName = robloxExe,
                     Arguments =
                         $"--app -t {await api.GetAuthenticationTicketAsync(RobloxManager.RobloxBiscuit)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={placeId} -LaunchExp InApp"
                 });
@@ -85,23 +89,36 @@ namespace Shinystrap.Pages
         {
             return ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds();
         }
-
-        private void SearchGame_OnTextChanged(object sender, TextChangedEventArgs e)
+        
+        private CancellationTokenSource? _searchCts;
+        
+        private async void SearchGame_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is not TextBox box)
                 return;
+            
+            _searchCts?.Cancel();
+            _searchCts?.Dispose();
+            _searchCts = new CancellationTokenSource();
 
-            var query = box.Text?.Trim().ToLower();
-
-            if (string.IsNullOrWhiteSpace(query))
+            try
             {
-                GameCards.ItemsSource = _allCards;
-                return;
-            }
+                await Task.Delay(150, _searchCts.Token);
 
-            GameCards.ItemsSource = _allCards
-                .Where(x => x.Title != null && x.Title.ToLower().Contains(query))
-                .ToList();
+                var query = SearchGameBox.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    GameCards.ItemsSource = _allCards;
+                    return;
+                }
+
+                GameCards.ItemsSource = await _api.SearchGameAsync(query);
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore
+            }
         }
 
         private async Task<List<GameCard>> GetGameCardsAsync()
@@ -126,7 +143,7 @@ namespace Shinystrap.Pages
 
             var tasks = games.Select(async game =>
             {
-                var imageUrl = await GetGameThumbnail(game.UniverseId);
+                var imageUrl = await _api.GetGameThumbnail(game.UniverseId);
 
                 return new GameCard
                 {
@@ -140,30 +157,7 @@ namespace Shinystrap.Pages
             return (await Task.WhenAll(tasks)).ToList();
         }
 
-        private async Task<string> GetGameThumbnail(object universeId)
-        {
-            var request = await _httpHandler.SendAsync(
-                $"https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds={universeId}&size=768x432&format=Png&isCircular=false",
-                HttpMethod.Get);
 
-            var response = await request.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(response);
-
-            if (!doc.RootElement.TryGetProperty("data", out var data) ||
-                data.GetArrayLength() == 0)
-                return "https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png";
-
-            var first = data[0];
-
-            if (!first.TryGetProperty("thumbnails", out var thumbs) ||
-                thumbs.GetArrayLength() == 0)
-                return "https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png";
-
-            var imageUrl = thumbs[0].GetProperty("imageUrl").GetString();
-
-            return imageUrl ?? "https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png";
-        }
 
         public class GamesResponse
         {

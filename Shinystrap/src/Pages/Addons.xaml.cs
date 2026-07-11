@@ -18,21 +18,22 @@ namespace Shinystrap.Pages
     {
         private readonly RobloxApi _api = new();
         private readonly HttpHandler _httpHandler = new();
-        
+
         private readonly string _robloxSettingsFile =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "GlobalBasicSettings_13.xml");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
+                "GlobalBasicSettings_13.xml");
 
         private CancellationTokenSource? _cts;
         private Mutex? _mutex1;
         private Mutex? _mutex2;
         private string? _lastNotifiedIp;
-        
-        
+
+
         public Addons()
         {
             InitializeComponent();
         }
-        
+
         private async void ReInstall_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -40,7 +41,8 @@ namespace Shinystrap.Pages
                 var dialog = new Wpf.Ui.Controls.MessageBox
                 {
                     Title = "⚠️ Caution",
-                    Content = "This action is irreversible. Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
+                    Content =
+                        "This action is irreversible. Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
                     PrimaryButtonText = "Yes, Reinstall",
                     CloseButtonText = "Cancel"
                 };
@@ -91,7 +93,7 @@ namespace Shinystrap.Pages
             {
                 return;
             }
-            
+
             _cts = new CancellationTokenSource();
             _ = WatchLogsAsync(_cts.Token);
         }
@@ -155,7 +157,7 @@ namespace Shinystrap.Pages
                     var ip = match.Value;
 
                     if (ip == _lastNotifiedIp) continue;
-                    
+
                     _lastNotifiedIp = ip;
                     await OnServerIpDetectedAsync(ip);
                 }
@@ -186,7 +188,7 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowError("Failed to connect to server", exception.Message);
             }
         }
-        
+
         private void TrackServerLocation_OnUnchecked(object sender, RoutedEventArgs e)
         {
             _cts?.Cancel();
@@ -232,6 +234,7 @@ namespace Shinystrap.Pages
 
         private async void Addons_OnLoaded(object sender, RoutedEventArgs e)
         {
+            //await CheckAllChannelsAsync();
             var channel = await _api.GetCurrentRobloxChannel();
             CurrentChannel.Text = $"Current Channel: {channel}";
 
@@ -241,10 +244,11 @@ namespace Shinystrap.Pages
             {
                 ExistingRuleExpander.Visibility = Visibility.Collapsed;
             }
-            if(Properties.Settings.Default.RuleExists && !string.IsNullOrEmpty(Properties.Settings.Default.RuleName))
+
+            if (Properties.Settings.Default.RuleExists && !string.IsNullOrEmpty(Properties.Settings.Default.RuleName))
             {
                 ExistingRuleName.Text = Properties.Settings.Default.RuleName;
-                
+
                 var exitingIps = FetchRuleIps();
                 ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
             }
@@ -256,36 +260,39 @@ namespace Shinystrap.Pages
             {
                 //there has to be better way of doing allat lol
                 var robloxPath =
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions",  WrittenChannel.Text);
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
+                        "Versions", WrittenChannel.Text);
 
                 var robloxPath2 =
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions");
-                
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
+                        "Versions");
+
                 var sourceFolder = new DirectoryInfo(robloxPath2)
                     .GetDirectories()
                     .Where(d => d.Name != WrittenChannel.Text)
                     .OrderByDescending(d => d.LastWriteTime)
                     .FirstOrDefault();
-                
+
                 if (Directory.Exists(robloxPath))
                 {
                     SnackbarHelper.ShowWarning("Warning", "The roblox version already exists!");
                     return;
                 }
-                
+
                 Directory.CreateDirectory(robloxPath);
-                
+
                 bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
 
                 var zipPath = robloxPath + "\\RobloxApp.zip";
-                
+
                 await _api.DownloadRobloxAsync(WrittenChannel.Text, isDefault, zipPath);
                 await ZipFile.ExtractToDirectoryAsync(zipPath, robloxPath, overwriteFiles: true);
                 File.Delete(zipPath);
-                
+
                 if (sourceFolder != null)
                 {
-                    foreach (string file in Directory.EnumerateFiles(sourceFolder.FullName, "*", SearchOption.AllDirectories))
+                    foreach (string file in Directory.EnumerateFiles(sourceFolder.FullName, "*",
+                                 SearchOption.AllDirectories))
                     {
                         string relativePath = Path.GetRelativePath(sourceFolder.FullName, file);
                         string destFile = Path.Combine(robloxPath, relativePath);
@@ -296,7 +303,7 @@ namespace Shinystrap.Pages
                             File.Copy(file, destFile);
                     }
                 }
-                
+
                 await _api.EditRobloxChannel(SetChannel.Text);
             }
             else
@@ -312,7 +319,7 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowError("Error", "Please enter a valid username and/or place id");
                 return;
             }
-            
+
             if (!long.TryParse(SnipePlaceId.Text, out _) || !long.TryParse(SnipeUsername.Text, out _))
             {
                 SnackbarHelper.ShowError("Error", "Place and/or User ID must be a number.");
@@ -325,27 +332,27 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowWarning("Warning", "Please login first in GameHistory before using this!");
                 return;
             }
-            
+
             SnipePlayerBtn.IsEnabled = false;
-            
+
             var serverId = await _api.FindPlayerServer(SnipeUsername.Text, SnipePlaceId.Text, biscuit);
-            
+
             if (!string.IsNullOrEmpty(serverId))
             {
                 await _api.JoinServerThroughId(biscuit, SnipePlaceId.Text, serverId);
             }
-            
+
             SnipePlayerBtn.IsEnabled = true;
         }
-        
+
         private CancellationTokenSource _cancellationTokenSource = new();
 
         private async void SetChannel_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             if (WrittenChannel == null || SetChannel == null) return;
-            
+
             await _cancellationTokenSource.CancelAsync();
-            _cancellationTokenSource.Dispose(); 
+            _cancellationTokenSource.Dispose();
 
             _cancellationTokenSource = new CancellationTokenSource();
             var token = _cancellationTokenSource.Token;
@@ -353,10 +360,10 @@ namespace Shinystrap.Pages
             try
             {
                 await Task.Delay(200, token);
-                
+
                 bool isPrivate = await _api.IsChannelPrivate(SetChannel.Text);
                 var channelName = await _api.GetChannelVersion(SetChannel.Text);
-                
+
                 if (!token.IsCancellationRequested)
                 {
                     WrittenChannel.Text = isPrivate ? "private version" : channelName;
@@ -368,6 +375,40 @@ namespace Shinystrap.Pages
             }
         }
 
+        private async Task CheckAllChannelsAsync()
+        {
+            var request = await _httpHandler.SendAsync(
+                "https://raw.githubusercontent.com/KloBraticc/Voidstrap-Roblox-Channels/main/Channels.json",
+                HttpMethod.Get);
+
+            var response = await request.Content.ReadAsStringAsync();
+
+            var channels = JsonSerializer.Deserialize<List<string>>(response);
+
+            if (channels == null)
+                return;
+
+            foreach (var channel in channels)
+            {
+                try
+                {
+                    if (await _api.IsChannelPrivate(channel))
+                        continue;
+
+                    var version = await _api.GetChannelVersion(channel);
+
+                    if (version != "NOT-FOUND")
+                    {
+                        Console.WriteLine($"{channel} -> {version}");
+                    }
+                }
+                catch
+                {
+                    // Ignore failed channels
+                }
+            }
+        }
+
         private void CreateFirewallRule_OnClick(object sender, RoutedEventArgs e)
         {
             if (Properties.Settings.Default.RuleExists)
@@ -375,7 +416,7 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowError("Error", "A rule already exists!");
                 return;
             }
-            
+
             if (string.IsNullOrWhiteSpace(IpList.Text) || string.IsNullOrWhiteSpace(RuleName.Text)) return;
 
             string ips = IpList.Text
@@ -383,30 +424,30 @@ namespace Shinystrap.Pages
                 .Select(ip => ip.Trim())
                 .Where(ip => !string.IsNullOrEmpty(ip))
                 .Aggregate((a, b) => $"{a},{b}");
-            
+
             Console.WriteLine(ips.Trim());
-            
-           Process.Start(new ProcessStartInfo
-           {
+
+            Process.Start(new ProcessStartInfo
+            {
                 FileName = "netsh",
                 Arguments =
                     $"advfirewall firewall add rule name=\"{RuleName.Text}\" dir=out action=block remoteip={ips}",
                 Verb = "runas",
                 UseShellExecute = true
-           });
-           
+            });
+
             Properties.Settings.Default.RuleName = RuleName.Text;
             ExistingRuleName.Text = Properties.Settings.Default.RuleName;
             Properties.Settings.Default.RuleExists = true;
-            
+
             _ = Task.Run(() => Properties.Settings.Default.Save());
-            
+
             ExistingRuleExpander.Visibility = Visibility.Visible;
 
             Task.Delay(500);
             var exitingIps = FetchRuleIps();
             ExistingIps.Text = string.Join("\n", exitingIps.Split(','));
-            
+
             SnackbarHelper.ShowSuccess("Success", "Successfully created firewall rule!");
         }
 
@@ -419,14 +460,14 @@ namespace Shinystrap.Pages
                 Verb = "runas",
                 UseShellExecute = true
             });
-            
+
             Properties.Settings.Default.RuleName = "";
             Properties.Settings.Default.RuleExists = false;
             ExistingRuleExpander.Visibility = Visibility.Hidden;
             _ = Task.Run(() => Properties.Settings.Default.Save());
-            
+
             NavigationService?.Refresh();
-            
+
             SnackbarHelper.ShowSuccess("Success", "Successfully DELETED firewall rule!");
         }
 
@@ -443,11 +484,11 @@ namespace Shinystrap.Pages
                     CreateNoWindow = true
                 }
             };
-            
+
             process.Start();
             string output = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
-            
+
             // Parse the RemoteIP line
             string ips = output
                 .Split('\n')
@@ -469,11 +510,12 @@ namespace Shinystrap.Pages
             Process.Start(new ProcessStartInfo
             {
                 FileName = "netsh",
-                Arguments = $"advfirewall firewall set rule name=\"{Properties.Settings.Default.RuleName}\" new remoteip={ips}",
+                Arguments =
+                    $"advfirewall firewall set rule name=\"{Properties.Settings.Default.RuleName}\" new remoteip={ips}",
                 Verb = "runas",
                 UseShellExecute = true
             });
-            
+
             SnackbarHelper.ShowSuccess("Success", "Successfully SAVED firewall rule!");
         }
 
@@ -484,7 +526,7 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowWarning("Warning", "Value cannot be null or empty!");
                 return;
             }
-            
+
             File.SetAttributes(_robloxSettingsFile, FileAttributes.Normal);
 
             var doc = XDocument.Load(_robloxSettingsFile);
@@ -497,7 +539,7 @@ namespace Shinystrap.Pages
 
             // Set back to readonly
             File.SetAttributes(_robloxSettingsFile, FileAttributes.ReadOnly);
-            
+
             SnackbarHelper.ShowSuccess("Success", "Successfully Set FPS Limit");
         }
 

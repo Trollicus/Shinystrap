@@ -58,5 +58,17 @@ namespace Shinystrap.Properties {
                 this["ExpFeatures"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DefaultInstalledPath {
+            get {
+                return ((string)(this["DefaultInstalledPath"]));
+            }
+            set {
+                this["DefaultInstalledPath"] = value;
+            }
+        }
     }
 }

@@ -35,8 +35,7 @@ namespace Shinystrap.Pages
             var currentVersion = await api.GetRobloxVersionAsync();
             
             var robloxPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Roblox",
+                Properties.Settings.Default.DefaultInstalledPath,
                 currentVersion,
                 "ClientSettings");
             
@@ -120,8 +119,7 @@ namespace Shinystrap.Pages
             var currentVersion = await Api.GetRobloxVersionAsync();
 
             var filePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Roblox",
+                Properties.Settings.Default.DefaultInstalledPath,
                 currentVersion,
                 "ClientSettings",
                 "ClientAppSettings.json");
@@ -141,8 +139,7 @@ namespace Shinystrap.Pages
         private async void FastFlagsEditor_OnLoaded(object sender, RoutedEventArgs e)
         {
             var filePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Roblox",
+                Properties.Settings.Default.DefaultInstalledPath,
                 await Api.GetRobloxVersionAsync(),
                 "ClientSettings",
                 "ClientAppSettings.json");

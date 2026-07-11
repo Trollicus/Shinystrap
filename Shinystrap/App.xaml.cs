@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Web;
 using System.Windows;
@@ -9,6 +10,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Shinystrap.Handlers.Roblox;
+using Shinystrap.Handlers.Web;
 
 namespace Shinystrap;
 
@@ -99,6 +101,61 @@ public partial class App : Application
 
     private async Task HandleProtocolLaunchAsync(string[] args)
     {
+        if (args.Length > 0 && args[0].Contains("install-roblox", StringComparison.OrdinalIgnoreCase))
+        {
+            var version = args[0]
+                .Replace("roblox-player://install-roblox-", "")
+                .TrimEnd('/');
+
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var robloxInstallmentPath = Path.Combine(appDataPath, "Roblox");
+
+            try
+            {
+                if (Directory.Exists(robloxInstallmentPath))
+                {
+                    Directory.Delete(robloxInstallmentPath, true);
+                }
+
+                var installerPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "RobloxPlayerInstaller.exe"); //maybe download it in other file n then delete it arono.
+
+                HttpHandler httpHandler = new HttpHandler();
+
+                await httpHandler.DownloadFileAsync(
+                    $"https://setup.rbxcdn.com/{version}-RobloxPlayerInstaller.exe",
+                    installerPath);
+
+                if (!File.Exists(installerPath))
+                {
+                    MessageBox.Show("Failed to download Roblox installer.");
+                    return;
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = installerPath,
+                    UseShellExecute = true
+                });
+
+                MessageBox.Show("Successfully installed Roblox!");
+            }
+            catch (HttpRequestException)
+            {
+                MessageBox.Show("Failed to download Roblox. The version may be invalid.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("Permission denied while modifying Roblox files.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unexpected error:\n{ex.Message}");
+            }
+
+            return;
+        }
         var api = new RobloxApi();
         var currentVersion = await api.GetRobloxVersionAsync();
 
@@ -132,11 +189,12 @@ public partial class App : Application
         }.ToString();
 
         var robloxExe = Path.Combine(
-            robloxPath,
+            Shinystrap.Properties.Settings.Default.DefaultInstalledPath,
             "Versions",
             currentVersion,
             "RobloxPlayerBeta.exe");
-
+        
+        
         Process.Start(new ProcessStartInfo
         {
             FileName = robloxExe,

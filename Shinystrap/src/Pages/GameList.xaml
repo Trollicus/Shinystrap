@@ -15,7 +15,7 @@
         <TextBlock Text="Quickly Join a game" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,47,0,0"/>
 
         <Grid Margin="356,27,31,0" VerticalAlignment="Top" Height="36">
-            <ui:TextBox x:Name="SetChannel"
+            <ui:TextBox x:Name="SearchGameBox"
                 PlaceholderText="Search here..."
                 TextChanged="SearchGame_OnTextChanged">
                 <ui:TextBox.Icon>
