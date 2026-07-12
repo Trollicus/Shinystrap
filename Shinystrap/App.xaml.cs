@@ -158,10 +158,7 @@ public partial class App : Application
         }
         var api = new RobloxApi();
         var currentVersion = await api.GetRobloxVersionAsync();
-
-        var robloxPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox");
-
+        
         var decodedArgs = WebUtility.UrlDecode(args[0]).Trim();
 
         var parsedArgs = decodedArgs

@@ -70,5 +70,17 @@ namespace Shinystrap.Properties {
                 this["DefaultInstalledPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RbxAutoUpdate {
+            get {
+                return ((bool)(this["RbxAutoUpdate"]));
+            }
+            set {
+                this["RbxAutoUpdate"] = value;
+            }
+        }
     }
 }

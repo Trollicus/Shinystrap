@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Http;
-using System.Security.Cryptography;
 using System.Windows;
 using Microsoft.Win32;
 using Shinystrap.Handlers.Roblox;
@@ -133,12 +131,13 @@ namespace Shinystrap.Pages
         {
             _updateCts.Cancel();
         }
-
+        
         private void Settings_OnLoaded(object sender, RoutedEventArgs e)
         {
             CurrentVersion.Text = Version;
             ExpFeaturesToggle.IsChecked = Properties.Settings.Default.ExpFeatures;
-
+            RbxAutoUpdateToggle.IsChecked = Properties.Settings.Default.RbxAutoUpdate;
+            
             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Shiny");
             InstallationPath.Text = folder;
@@ -218,6 +217,156 @@ namespace Shinystrap.Pages
             }
         }
         
-        //TODO: add roblox auto-update and maybe button to delete, to revert rbx protocol too.
+        private CancellationTokenSource _cancellation = null!;
+        private void RbxAutoUpdateToggle_OnChecked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.RbxAutoUpdate = true;
+            Properties.Settings.Default.Save();
+
+            _cancellation?.Cancel();
+            _cancellation?.Dispose();
+
+            _cancellation = new CancellationTokenSource();
+            _ = RbxAutoUpdate(_cancellation.Token);
+        }
+
+        private async Task RbxAutoUpdate(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (await _api.CheckForUpdatesAsync())
+                    {
+                        SnackbarHelper.ShowInfo("New Version Detected", "New Version Detected, Updating!", TimeSpan.FromSeconds(5));
+                        
+                        var processes = Process.GetProcessesByName("RobloxPlayerBeta");
+                        try
+                        {
+                            if (processes.Length > 0)
+                            {
+                                SnackbarHelper.ShowError("Error", "Please close Roblox before Shinystrap updates.");
+
+                                await Task.Delay(TimeSpan.FromMinutes(10), token);
+                                continue;
+                            }
+                        }
+                        finally
+                        {
+                            foreach (var process in processes)
+                                process.Dispose();
+                        }
+
+                        try
+                        {
+                            var initialization = new Initialization();
+
+                            var currentVersion = await _api.GetRobloxVersionAsync();
+                            var defaultPath = Properties.Settings.Default.DefaultInstalledPath;
+
+                            await initialization.InitializeAsync(currentVersion, defaultPath);
+                            await initialization.SetRobloxProtocol();
+                        }
+                        catch (Exception ex)
+                        {
+                            SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
+                        }
+                    }
+                    
+                    await Task.Delay(TimeSpan.FromMinutes(10), token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        RbxAutoUpdateToggle.IsChecked = false;
+                    });
+
+                    SnackbarHelper.ShowError("Shinystrap - Error", ex.Message);
+                    break;
+                }
+            }
+        }
+        
+        private void RbxAutoUpdateToggle_OnUnchecked(object sender, RoutedEventArgs e)
+        {
+            _cancellation?.Cancel();
+            _cancellation?.Dispose();
+            _cancellation = null!;
+
+            Properties.Settings.Default.RbxAutoUpdate = false;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+        }
+
+        private void BrowsePath_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFolderDialog();
+
+            if (dialog.ShowDialog() == true)
+            {
+                InstallationPath.Text = dialog.FolderName;
+            }
+        }
+
+        private void UnInstallRbx_OnClick(object sender, RoutedEventArgs e)
+        {
+            var defaultPath = Properties.Settings.Default.DefaultInstalledPath;
+
+            if (Directory.Exists(defaultPath))
+            {
+                try
+                {
+                    Directory.Delete(defaultPath, true);
+                }
+                catch (IOException ex)
+                {
+                    SnackbarHelper.ShowError("Error", $"Failed to remove installation folder: {ex.Message}");
+                    return;
+                }
+            }
+            
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var versionsPath = Path.Combine(basePath, "Roblox", "Versions");
+            
+            var latestVersion = new DirectoryInfo(versionsPath)
+                .GetDirectories()
+                .OrderByDescending(d => d.LastWriteTime)
+                .FirstOrDefault();
+
+            if (latestVersion == null) return;
+            string versionName = latestVersion.Name;
+               
+            var robloxExe = Path.Combine(
+                versionsPath,
+                versionName,
+                "RobloxPlayerBeta.exe"
+            );
+                
+            if (!File.Exists(robloxExe))
+            {
+                SnackbarHelper.ShowError("Error", "Roblox executable not found, please reinstall roblox manually!");
+                return;
+            }
+                
+            var value = $"\"{robloxExe}\" \"%1\"";
+
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Classes\roblox-player\shell\open\command",
+                writable: true);
+
+            if (key is null)
+            {
+                SnackbarHelper.ShowError("Error", "Registry key not found, please reinstall roblox manually!");
+                return;
+            }
+
+            key.SetValue("", value);
+                
+            SnackbarHelper.ShowSuccess("Success","Successfully deleted Roblox installed by Shinystrap!");
+        }
     }
 }
