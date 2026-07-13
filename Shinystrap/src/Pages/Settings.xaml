@@ -8,11 +8,16 @@
     mc:Ignorable="d"
     d:DesignWidth="695"
     Title="Settings"
-    Loaded="Settings_OnLoaded" Height="664">
+    Loaded="Settings_OnLoaded">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
-            <StackPanel Margin="10,30,10,10" Background="Transparent">
+            <StackPanel Grid.Row="1" Margin="10,30,10,10" Background="Transparent">
 
                 <TextBlock Text="Settings" Foreground="White" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10" />
 
@@ -144,9 +149,9 @@
 
                         <TextBox x:Name="InstallationPath" Margin="50,0,194,0" VerticalAlignment="Center" />
                         <Button
-                            Content="Browse"
-                            Width="81"
-                            Margin="452,0,0,0" Click="BrowsePath_OnClick" />
+                                Content="Browse"
+                                Width="81"
+                                Margin="452,0,0,0" Click="BrowsePath_OnClick" />
 
                     </Grid>
                 </Expander>

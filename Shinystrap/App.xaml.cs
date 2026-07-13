@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Web;
 using System.Windows;
@@ -10,7 +9,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Shinystrap.Handlers.Roblox;
-using Shinystrap.Handlers.Web;
+using Shinystrap.Handlers.Shinystrap;
 
 namespace Shinystrap;
 
@@ -25,7 +24,7 @@ public partial class App : Application
             UIElement.PreviewMouseWheelEvent,
             new MouseWheelEventHandler(OnGlobalPreviewMouseWheel),
             true);
-        
+
         if (e.Args.Length == 0)
         {
             return;
@@ -34,7 +33,7 @@ public partial class App : Application
         _ = HandleProtocolLaunchAsync(e.Args)
             .ContinueWith(_ => Dispatcher.Invoke(Shutdown));
     }
-    
+
     //Thanks to JetBrains Rider AI on this one lol
     private static void OnGlobalPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -101,64 +100,37 @@ public partial class App : Application
 
     private async Task HandleProtocolLaunchAsync(string[] args)
     {
+        var api = new RobloxApi();
+        var currentVersion = await api.GetRobloxVersionAsync();
+
         if (args.Length > 0 && args[0].Contains("install-roblox", StringComparison.OrdinalIgnoreCase))
         {
-            var version = args[0]
-                .Replace("roblox-player://install-roblox-", "")
-                .TrimEnd('/');
-
-            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var robloxInstallmentPath = Path.Combine(appDataPath, "Roblox");
-
-            try
+            if (await api.CheckForUpdatesAsync())
             {
-                if (Directory.Exists(robloxInstallmentPath))
+                var processes = Process.GetProcessesByName("RobloxPlayerBeta");
+                if (processes.Length > 0)
                 {
-                    Directory.Delete(robloxInstallmentPath, true);
-                }
-
-                var installerPath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "RobloxPlayerInstaller.exe"); //maybe download it in other file n then delete it arono.
-
-                HttpHandler httpHandler = new HttpHandler();
-
-                await httpHandler.DownloadFileAsync(
-                    $"https://setup.rbxcdn.com/{version}-RobloxPlayerInstaller.exe",
-                    installerPath);
-
-                if (!File.Exists(installerPath))
-                {
-                    MessageBox.Show("Failed to download Roblox installer.");
+                    MessageBox.Show("Error", "Please close Roblox before Shinystrap updates.");
                     return;
                 }
 
-                Process.Start(new ProcessStartInfo
+                try
                 {
-                    FileName = installerPath,
-                    UseShellExecute = true
-                });
+                    var initialization = new Initialization();
+                    var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
 
-                MessageBox.Show("Successfully installed Roblox!");
-            }
-            catch (HttpRequestException)
-            {
-                MessageBox.Show("Failed to download Roblox. The version may be invalid.");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                MessageBox.Show("Permission denied while modifying Roblox files.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Unexpected error:\n{ex.Message}");
+                    await initialization.InitializeAsync(currentVersion, defaultPath);
+                    await initialization.SetRobloxProtocol();
+                }
+                catch (Exception ex)
+                {
+                    SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
+                }
             }
 
             return;
         }
-        var api = new RobloxApi();
-        var currentVersion = await api.GetRobloxVersionAsync();
-        
+
         var decodedArgs = WebUtility.UrlDecode(args[0]).Trim();
 
         var parsedArgs = decodedArgs
@@ -190,8 +162,8 @@ public partial class App : Application
             "Versions",
             currentVersion,
             "RobloxPlayerBeta.exe");
-        
-        
+
+
         Process.Start(new ProcessStartInfo
         {
             FileName = robloxExe,
