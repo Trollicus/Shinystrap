@@ -121,6 +121,8 @@ public partial class App : Application
 
                     await initialization.InitializeAsync(currentVersion, defaultPath);
                     await initialization.SetRobloxProtocol();
+
+                    MessageBox.Show($"Successfully Installed Roblox {currentVersion}!");
                 }
                 catch (Exception ex)
                 {
