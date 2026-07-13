@@ -19,6 +19,8 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        AccountHandler.LoadAccounts();
+        
         EventManager.RegisterClassHandler(
             typeof(UIElement),
             UIElement.PreviewMouseWheelEvent,

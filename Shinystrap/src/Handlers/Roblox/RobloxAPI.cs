@@ -25,6 +25,16 @@ public class RobloxApi
         return !string.Equals(installedVersion, latestVersion, StringComparison.Ordinal);
     }
 
+    public async Task<string> GetCurrentlyInstalledRobloxVersion()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Classes\roblox-player\shell\open\command");
+        var installedVersion = key?.GetValue("version")?.ToString();
+
+        var version = await GetRobloxVersionAsync();
+        
+        return installedVersion ?? version;
+    }
+
     public async Task<string> GetRobloxVersionAsync()
     {
         var request = await _handler.SendAsync("https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer",
@@ -190,14 +200,16 @@ public class RobloxApi
         }
     }
 
-    public async Task DownloadRobloxAsync(string version, bool isDefault, string path)
+    public async Task<string> GetRobloxPackageManifestChannel(string version, bool isDefault)
     {
         var baseUrl = "https://setup.rbxcdn.com";
 
         if (!isDefault)
             baseUrl += "/channel/common";
+        
+        Console.Write("Package Link: " + $"{baseUrl}/{version}-rbxPkgManifest.txt\n");
 
-        await _handler.DownloadFileAsync($"{baseUrl}/{version}-RobloxApp.zip", path);
+        return $"{baseUrl}/{version}-rbxPkgManifest.txt";
     }
 
     private async Task<string> GetUserThumbnail(string userId)
@@ -373,12 +385,9 @@ public class RobloxApi
         var authTicket = await GetAuthenticationTicketAsync(cookie);
 
         var currentVersion = await GetRobloxVersionAsync();
-
-        var robloxPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox");
-
+        
         var robloxExe = Path.Combine(
-            robloxPath,
+            Properties.Settings.Default.DefaultInstalledPath,
             "Versions",
             currentVersion,
             "RobloxPlayerBeta.exe");

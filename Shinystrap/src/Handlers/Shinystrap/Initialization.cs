@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Windows;
 using Microsoft.Win32;
+using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Web;
 
 namespace Shinystrap.Handlers.Shinystrap;
@@ -55,6 +56,7 @@ public class Initialization
 
         if (!manifestText.Contains("v0"))
         {
+            Console.WriteLine("What?" + manifestText);
             SnackbarHelper.ShowError("Error", "Unsupported manifest version!");
             return packages;
         }
@@ -84,9 +86,15 @@ public class Initialization
         return packages;
     }
 
-    private async Task<string?> DownloadPackages(RobloxPackage package, string downloadsPath, string version)
+    private async Task<string?> DownloadPackages(RobloxPackage package, string downloadsPath, string version, bool isDefault = true)
     {
-        var url = $"https://setup.rbxcdn.com/{version}-{package.Name}";
+        var baseUrl = "https://setup.rbxcdn.com";
+
+        if (!isDefault)
+            baseUrl += "/channel/common";
+            
+        var url = $"{baseUrl}/{version}-{package.Name}";
+        
         string downloadPath = Path.Combine(
             downloadsPath,
             $"{package.Signature}-{package.Name}");
@@ -134,7 +142,7 @@ public class Initialization
     {
         if (!GetPackageHeaders.TryGetValue(package.Name, out var relativePath))
         {
-            SnackbarHelper.ShowError("Error - Show this to dev", $"Unknown package: {package.Name}, Version: {version}");
+            SnackbarHelper.ShowError("Error - Show this to dev", $"Unknown package: {package.Name}, Version: {version}", TimeSpan.FromMinutes(1));
             return;
         }
         
@@ -230,6 +238,71 @@ public class Initialization
         await File.WriteAllTextAsync(
             Path.Combine(newVersionPath, "AppSettings.xml"),
             AppSettings);
+    }
+
+    public async Task InstallChannelVersion(string version, bool isDefault)
+    {
+        var api = new RobloxApi();
+        
+        var packageManifest = await api.GetRobloxPackageManifestChannel(version, isDefault);
+        
+        Console.WriteLine($"packageManifest: {packageManifest}");
+        
+        var request = await _handler.SendAsync(
+            packageManifest,
+            HttpMethod.Get);
+
+        string manifest = await request.Content.ReadAsStringAsync();
+        
+        var packages = ParsePackageManifest(manifest);
+        
+        var packagePaths = new Dictionary<RobloxPackage, string>();
+
+        var installationPath = Properties.Settings.Default.DefaultInstalledPath;
+        
+        string versionsPath = Path.Combine(installationPath, "Versions");
+        string newVersionPath = Path.Combine(versionsPath, version);
+        
+        Directory.CreateDirectory(newVersionPath);
+        
+        string downloadsPath = Path.Combine(installationPath, "Downloads");
+        
+        foreach (var package in packages)
+        {
+            var path = await DownloadPackages(package, downloadsPath, version, false);
+
+            if (path != null)
+                packagePaths.Add(package, path);
+        }
+
+        var extractionTasks = new List<Task>();
+        
+        foreach (var package in packagePaths)
+        {
+            if (!package.Key.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (package.Key.Name == "WebView2RuntimeInstaller.zip")
+                continue;
+
+            extractionTasks.Add(
+                ExtractPackages(
+                    package.Key,
+                    package.Value,
+                    newVersionPath,
+                    version));
+        }
+
+        await Task.WhenAll(extractionTasks);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(newVersionPath, "AppSettings.xml"),
+            AppSettings);
+        
+        await api.EditRobloxChannel(version);
+        
+        SnackbarHelper.ShowSuccess("Success", $"Successfully Installed Channel - {version}");
+        
     }
 
     public Task SetRobloxProtocol()

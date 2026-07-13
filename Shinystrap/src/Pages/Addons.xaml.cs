@@ -4,7 +4,6 @@ using Shinystrap.Handlers.Shinystrap;
 using Shinystrap.Handlers.Web;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -19,7 +18,7 @@ namespace Shinystrap.Pages
         private readonly RobloxApi _api = new();
         private readonly HttpHandler _httpHandler = new();
 
-        private readonly string _robloxSettingsFile =
+        private readonly string? _robloxSettingsFile =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
                 "GlobalBasicSettings_13.xml");
 
@@ -42,7 +41,7 @@ namespace Shinystrap.Pages
                 {
                     Title = "⚠️ Caution",
                     Content =
-                        "This action is irreversible. Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
+                        "This action is irreversible. Shinystrap's Roblox will be completely reinstalled.\n\nAre you sure you want to continue?",
                     PrimaryButtonText = "Yes, Reinstall",
                     CloseButtonText = "Cancel"
                 };
@@ -52,34 +51,59 @@ namespace Shinystrap.Pages
                 {
                     return;
                 }
+                
+                
 
-                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var robloxInstallmentPath = Path.Combine(appDataPath, "Roblox");
-
+                //Deletion + Checks
+                var processes = Process.GetProcessesByName("RobloxPlayerBeta");
                 try
                 {
-                    if (Directory.Exists(robloxInstallmentPath))
+                    if (processes.Length > 0)
                     {
-                        Directory.Delete(robloxInstallmentPath, true);
+                        SnackbarHelper.ShowError("Error", "Please close Roblox before continuing.");
+                        return;
                     }
                 }
-                catch (Exception)
+                catch
                 {
-                    SnackbarHelper.ShowError("Error", "Error deleting Roblox Message");
+                    // ignored
                 }
 
-                var rbxVersion = await _api.GetRobloxVersionAsync();
-                var installerPath = Path.Combine(Directory.GetCurrentDirectory(), "RobloxPlayerInstaller.exe");
+                var currentVersion = await _api.GetCurrentlyInstalledRobloxVersion();
+                
+                var defaultPath = Properties.Settings.Default.DefaultInstalledPath;
 
-                await _httpHandler.DownloadFileAsync(
-                    $"https://setup.rbxcdn.com/{rbxVersion}-RobloxPlayerInstaller.exe",
-                    installerPath);
-
-                Process.Start(new ProcessStartInfo
+                if (string.IsNullOrEmpty(defaultPath))
                 {
-                    FileName = installerPath,
-                    UseShellExecute = true
-                });
+                    SnackbarHelper.ShowWarning("Warning", "No Roblox installed by Shinystrap, please initialize before using this!");
+                    return;
+                }
+
+                var dir = Path.Combine(defaultPath, currentVersion);
+
+                if (Directory.Exists(dir))
+                {
+                    Directory.Delete(dir, true);
+                }
+                
+                //Installation
+                
+                var currentRobloxVersion = await _api.GetRobloxVersionAsync();
+
+                var initializer = new Initialization();
+
+                await initializer.InitializeAsync(
+                    currentRobloxVersion,
+                    defaultPath
+                );
+                
+                await initializer.SetRobloxProtocol();
+                
+                SnackbarHelper.ShowSuccess(
+                    "Shinystrap",
+                    "Roblox reinstalled successfully!"
+                );
+
             }
             catch (Exception ex)
             {
@@ -258,53 +282,23 @@ namespace Shinystrap.Pages
         {
             if (WrittenChannel.Text != "private version" && WrittenChannel.Text.Contains("version"))
             {
-                //there has to be better way of doing allat lol
                 var robloxPath =
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
-                        "Versions", WrittenChannel.Text);
-
-                var robloxPath2 =
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
-                        "Versions");
-
-                var sourceFolder = new DirectoryInfo(robloxPath2)
-                    .GetDirectories()
-                    .Where(d => d.Name != WrittenChannel.Text)
-                    .OrderByDescending(d => d.LastWriteTime)
-                    .FirstOrDefault();
-
+                    Path.Combine(
+                        Properties.Settings.Default.DefaultInstalledPath,
+                        "Versions",
+                        WrittenChannel.Text);
+                
                 if (Directory.Exists(robloxPath))
                 {
                     SnackbarHelper.ShowWarning("Warning", "The roblox version already exists!");
                     return;
                 }
-
-                Directory.CreateDirectory(robloxPath);
+                
 
                 bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
 
-                var zipPath = robloxPath + "\\RobloxApp.zip";
-
-                await _api.DownloadRobloxAsync(WrittenChannel.Text, isDefault, zipPath);
-                await ZipFile.ExtractToDirectoryAsync(zipPath, robloxPath, overwriteFiles: true);
-                File.Delete(zipPath);
-
-                if (sourceFolder != null)
-                {
-                    foreach (string file in Directory.EnumerateFiles(sourceFolder.FullName, "*",
-                                 SearchOption.AllDirectories))
-                    {
-                        string relativePath = Path.GetRelativePath(sourceFolder.FullName, file);
-                        string destFile = Path.Combine(robloxPath, relativePath);
-
-                        Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
-
-                        if (!File.Exists(destFile))
-                            File.Copy(file, destFile);
-                    }
-                }
-
-                await _api.EditRobloxChannel(SetChannel.Text);
+                var init = new Initialization();
+                await init.InstallChannelVersion(WrittenChannel.Text, isDefault);
             }
             else
             {
@@ -527,6 +521,12 @@ namespace Shinystrap.Pages
                 return;
             }
 
+            if (!File.Exists(_robloxSettingsFile))
+            {
+                SnackbarHelper.ShowError("Error", "GlobalBasicSettings doesn't exist, please open Roblox before changing FPS!");
+                return;
+            }
+
             File.SetAttributes(_robloxSettingsFile, FileAttributes.Normal);
 
             var doc = XDocument.Load(_robloxSettingsFile);
@@ -536,8 +536,7 @@ namespace Shinystrap.Pages
             element?.Value = SetFPSValue.ToString() ?? "9999";
 
             doc.Save(_robloxSettingsFile);
-
-            // Set back to readonly
+            
             File.SetAttributes(_robloxSettingsFile, FileAttributes.ReadOnly);
 
             SnackbarHelper.ShowSuccess("Success", "Successfully Set FPS Limit");
@@ -545,6 +544,7 @@ namespace Shinystrap.Pages
 
         private int GetFramerateCap()
         {
+            if (!File.Exists(_robloxSettingsFile)) return 0;
             var doc = XDocument.Load(_robloxSettingsFile);
             var value = doc.Descendants("int")
                 .FirstOrDefault(e => (string)e.Attribute("name")! == "FramerateCap")

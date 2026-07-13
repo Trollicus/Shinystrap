@@ -47,21 +47,21 @@ public partial class AccountManager : Page
     private record AccountRecord(string Title, string Description, string ImageSource, string EncryptedBiscuit, bool IsSelected);
     public ObservableCollection<Account> Accounts { get; set; } = [];
     
-    private static readonly string StorePath = Path.Combine(
+    private readonly string _storePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Shinystrap", "accounts.json");
     
-    private static byte[] EncryptBiscuit(string biscuit) =>
+    private byte[] EncryptBiscuit(string biscuit) =>
         ProtectedData.Protect(Encoding.UTF8.GetBytes(biscuit), null, DataProtectionScope.CurrentUser);
 
-    private static string DecryptBiscuit(byte[] encrypted) =>
+    private string DecryptBiscuit(byte[] encrypted) =>
         Encoding.UTF8.GetString(ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser));
     
     private void SaveAccounts()
     {
         try
         {
-            var dir = Path.GetDirectoryName(StorePath)!;
+            var dir = Path.GetDirectoryName(_storePath)!;
             Directory.CreateDirectory(dir);
 
             var records = Accounts.Select(a => new AccountRecord(
@@ -72,7 +72,7 @@ public partial class AccountManager : Page
                 a.IsSelected
             )).ToList();
 
-            File.WriteAllText(StorePath, JsonSerializer.Serialize(records));
+            File.WriteAllText(_storePath, JsonSerializer.Serialize(records));
         }
         catch (Exception exception)
         {
@@ -85,10 +85,10 @@ public partial class AccountManager : Page
     {
         try
         {
-            if (!File.Exists(StorePath))
+            if (!File.Exists(_storePath))
                 return;
 
-            var json = File.ReadAllText(StorePath);
+            var json = File.ReadAllText(_storePath);
             var records = JsonSerializer.Deserialize<List<AccountRecord>>(json);
             if (records is null)
                 return;
