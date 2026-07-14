@@ -20,7 +20,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         AccountHandler.LoadAccounts();
-        
+
         EventManager.RegisterClassHandler(
             typeof(UIElement),
             UIElement.PreviewMouseWheelEvent,
@@ -105,31 +105,34 @@ public partial class App : Application
         var api = new RobloxApi();
         var currentVersion = await api.GetRobloxVersionAsync();
 
+        if (await api.CheckForUpdatesAsync())
+        {
+            MessageBox.Show("Outdated Roblox, please update before launching!");
+            return;
+        }
+
         if (args.Length > 0 && args[0].Contains("install-roblox", StringComparison.OrdinalIgnoreCase))
         {
-            if (await api.CheckForUpdatesAsync())
+            var processes = Process.GetProcessesByName("RobloxPlayerBeta");
+            if (processes.Length > 0)
             {
-                var processes = Process.GetProcessesByName("RobloxPlayerBeta");
-                if (processes.Length > 0)
-                {
-                    MessageBox.Show("Error", "Please close Roblox before Shinystrap updates.");
-                    return;
-                }
+                MessageBox.Show("Error", "Please close Roblox before Shinystrap updates.");
+                return;
+            }
 
-                try
-                {
-                    var initialization = new Initialization();
-                    var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
+            try
+            {
+                var initialization = new Initialization();
+                var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
 
-                    await initialization.InitializeAsync(currentVersion, defaultPath);
-                    await initialization.SetRobloxProtocol();
+                await initialization.InitializeAsync(currentVersion, defaultPath);
+                await initialization.SetRobloxProtocol();
 
-                    MessageBox.Show($"Successfully Installed Roblox {currentVersion}!");
-                }
-                catch (Exception ex)
-                {
-                    SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
-                }
+                MessageBox.Show($"Successfully Installed Roblox {currentVersion}!");
+            }
+            catch (Exception ex)
+            {
+                SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
             }
 
             return;
@@ -147,7 +150,7 @@ public partial class App : Application
             !parsedArgs.TryGetValue("gameinfo", out var gameInfo))
         {
             MessageBox.Show("Invalid Roblox protocol arguments, pls contact admin/mod");
-            throw new InvalidOperationException("Invalid Roblox protocol arguments.");
+            return;
         }
 
         var spoofBrowserTracker = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);

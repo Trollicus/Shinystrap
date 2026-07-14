@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,8 +52,7 @@ namespace Shinystrap.Pages
                 {
                     return;
                 }
-                
-                
+
 
                 //Deletion + Checks
                 var processes = Process.GetProcessesByName("RobloxPlayerBeta");
@@ -70,12 +70,13 @@ namespace Shinystrap.Pages
                 }
 
                 var currentVersion = await _api.GetCurrentlyInstalledRobloxVersion();
-                
+
                 var defaultPath = Properties.Settings.Default.DefaultInstalledPath;
 
                 if (string.IsNullOrEmpty(defaultPath))
                 {
-                    SnackbarHelper.ShowWarning("Warning", "No Roblox installed by Shinystrap, please initialize before using this!");
+                    SnackbarHelper.ShowWarning("Warning",
+                        "No Roblox installed by Shinystrap, please initialize before using this!");
                     return;
                 }
 
@@ -85,9 +86,9 @@ namespace Shinystrap.Pages
                 {
                     Directory.Delete(dir, true);
                 }
-                
+
                 //Installation
-                
+
                 var currentRobloxVersion = await _api.GetRobloxVersionAsync();
 
                 var initializer = new Initialization();
@@ -96,14 +97,13 @@ namespace Shinystrap.Pages
                     currentRobloxVersion,
                     defaultPath
                 );
-                
+
                 await initializer.SetRobloxProtocol();
-                
+
                 SnackbarHelper.ShowSuccess(
                     "Shinystrap",
                     "Roblox reinstalled successfully!"
                 );
-
             }
             catch (Exception ex)
             {
@@ -259,6 +259,7 @@ namespace Shinystrap.Pages
         private async void Addons_OnLoaded(object sender, RoutedEventArgs e)
         {
             //await CheckAllChannelsAsync();
+            StopRbxMinimize.IsChecked = await GetRobloxMinimizeToTray();
             var channel = await _api.GetCurrentRobloxChannel();
             CurrentChannel.Text = $"Current Channel: {channel}";
 
@@ -287,13 +288,13 @@ namespace Shinystrap.Pages
                         Properties.Settings.Default.DefaultInstalledPath,
                         "Versions",
                         WrittenChannel.Text);
-                
+
                 if (Directory.Exists(robloxPath))
                 {
                     SnackbarHelper.ShowWarning("Warning", "The roblox version already exists!");
                     return;
                 }
-                
+
 
                 bool isDefault = String.Compare(SetChannel.Text, "production", StringComparison.OrdinalIgnoreCase) == 0;
 
@@ -523,7 +524,8 @@ namespace Shinystrap.Pages
 
             if (!File.Exists(_robloxSettingsFile))
             {
-                SnackbarHelper.ShowError("Error", "GlobalBasicSettings doesn't exist, please open Roblox before changing FPS!");
+                SnackbarHelper.ShowError("Error",
+                    "GlobalBasicSettings doesn't exist, please open Roblox before changing FPS!");
                 return;
             }
 
@@ -536,7 +538,7 @@ namespace Shinystrap.Pages
             element?.Value = SetFPSValue.ToString() ?? "9999";
 
             doc.Save(_robloxSettingsFile);
-            
+
             File.SetAttributes(_robloxSettingsFile, FileAttributes.ReadOnly);
 
             SnackbarHelper.ShowSuccess("Success", "Successfully Set FPS Limit");
@@ -551,6 +553,100 @@ namespace Shinystrap.Pages
                 ?.Value;
 
             return int.TryParse(value, out int cap) ? cap : 0;
+        }
+
+        private async void StopRbxMinimize_OnChecked(object sender, RoutedEventArgs e)
+        {
+            await StopRobloxFromMinimizing(true);
+
+            Properties.Settings.Default.StopRbxMinimize = true;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+        }
+
+        private async void StopRbxMinimize_OnUnchecked(object sender, RoutedEventArgs e)
+        {
+            await StopRobloxFromMinimizing(false);
+
+            Properties.Settings.Default.StopRbxMinimize = false;
+            _ = Task.Run(() => Properties.Settings.Default.Save());
+        }
+
+        private async Task StopRobloxFromMinimizing(bool stop)
+        {
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var appStorage = Path.Combine(basePath, "Roblox", "LocalStorage", "appStorage.json");
+
+            if (!File.Exists(appStorage))
+                return;
+
+            string json;
+
+            await using (var stream = new FileStream(
+                             appStorage,
+                             FileMode.Open,
+                             FileAccess.Read,
+                             FileShare.ReadWrite))
+            {
+                using var reader = new StreamReader(stream);
+                json = await reader.ReadToEndAsync();
+            }
+
+            using var document = JsonDocument.Parse(json);
+
+            if (!document.RootElement.TryGetProperty("MinimizeToTray", out var property))
+                return;
+
+            var oldValue = property.GetString();
+
+            if (oldValue == null)
+                return;
+
+            var newValue = stop ? "true" : "false";
+
+            json = json.Replace(
+                $"\"MinimizeToTray\":\"{oldValue}\"",
+                $"\"MinimizeToTray\":\"{newValue}\"");
+
+            await using (var stream = new FileStream(
+                             appStorage,
+                             FileMode.Create,
+                             FileAccess.Write,
+                             FileShare.ReadWrite))
+            {
+                await using var writer = new StreamWriter(stream);
+                await writer.WriteAsync(json);
+            }
+        }
+
+        private async Task<bool> GetRobloxMinimizeToTray()
+        {
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var appStorage = Path.Combine(basePath, "Roblox", "LocalStorage", "appStorage.json");
+
+            if (!File.Exists(appStorage))
+                return true;
+
+            string json;
+
+            await using (var stream = new FileStream(
+                             appStorage,
+                             FileMode.Open,
+                             FileAccess.Read,
+                             FileShare.ReadWrite))
+            {
+                using var reader = new StreamReader(stream);
+                json = await reader.ReadToEndAsync();
+            }
+
+            using var document = JsonDocument.Parse(json);
+            
+            if (document.RootElement.TryGetProperty("MinimizeToTray", out var value))
+            {
+                return value.GetString() == "true";
+            }
+            
+
+            return false;
         }
     }
 }

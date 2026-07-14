@@ -60,6 +60,20 @@
                                  Unchecked="RbxMutex_OnUnchecked" />
             </ui:CardControl>
 
+            <ui:CardControl Margin="0,0,0,10">
+                <ui:CardControl.Icon>
+                    <ui:SymbolIcon Symbol="ArrowMinimize24" />
+                </ui:CardControl.Icon>
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <TextBlock Text="Disable Robox Minimizing" FontWeight="SemiBold" />
+                        <TextBlock Text="(On = Minimizing, Off = Disabled) Stops roblox from minimizing to tray after close." Foreground="White"
+                       FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch x:Name="StopRbxMinimize" VerticalAlignment="Center" Checked="StopRbxMinimize_OnChecked" Unchecked="StopRbxMinimize_OnUnchecked"/>
+            </ui:CardControl>
+
             <Expander HorizontalContentAlignment="Stretch" Padding="16,12" Margin="0,0,0,25">
                 <Expander.Header>
                     <Grid ColumnDefinitions="Auto, *, Auto">
