@@ -66,8 +66,8 @@
                 </ui:CardControl.Icon>
                 <ui:CardControl.Header>
                     <StackPanel>
-                        <TextBlock Text="Disable Robox Minimizing" FontWeight="SemiBold" />
-                        <TextBlock Text="(On = Minimizing, Off = Disabled) Stops roblox from minimizing to tray after close." Foreground="White"
+                        <TextBlock Text="Disable Roblox Minimizing" FontWeight="SemiBold" />
+                        <TextBlock Text="(On = Disabled, Off = Minimizing) Stops roblox from minimizing to tray after close." Foreground="White"
                        FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
                     </StackPanel>
                 </ui:CardControl.Header>

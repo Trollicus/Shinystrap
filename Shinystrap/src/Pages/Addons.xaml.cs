@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,6 +21,9 @@ namespace Shinystrap.Pages
         private readonly string? _robloxSettingsFile =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox",
                 "GlobalBasicSettings_13.xml");
+        
+        private static readonly string BasePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        private readonly string? _appStorage = Path.Combine(BasePath, "Roblox", "LocalStorage", "appStorage.json");
 
         private CancellationTokenSource? _cts;
         private Mutex? _mutex1;
@@ -259,7 +261,7 @@ namespace Shinystrap.Pages
         private async void Addons_OnLoaded(object sender, RoutedEventArgs e)
         {
             //await CheckAllChannelsAsync();
-            StopRbxMinimize.IsChecked = await GetRobloxMinimizeToTray();
+            StopRbxMinimize.IsChecked = !await GetRobloxMinimizeToTray();
             var channel = await _api.GetCurrentRobloxChannel();
             CurrentChannel.Text = $"Current Channel: {channel}";
 
@@ -573,16 +575,13 @@ namespace Shinystrap.Pages
 
         private async Task StopRobloxFromMinimizing(bool stop)
         {
-            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var appStorage = Path.Combine(basePath, "Roblox", "LocalStorage", "appStorage.json");
-
-            if (!File.Exists(appStorage))
+            if (!File.Exists(_appStorage))
                 return;
 
             string json;
 
             await using (var stream = new FileStream(
-                             appStorage,
+                             _appStorage,
                              FileMode.Open,
                              FileAccess.Read,
                              FileShare.ReadWrite))
@@ -601,14 +600,14 @@ namespace Shinystrap.Pages
             if (oldValue == null)
                 return;
 
-            var newValue = stop ? "true" : "false";
+            var newValue = stop ? "false" : "true";
 
             json = json.Replace(
                 $"\"MinimizeToTray\":\"{oldValue}\"",
                 $"\"MinimizeToTray\":\"{newValue}\"");
 
             await using (var stream = new FileStream(
-                             appStorage,
+                             _appStorage,
                              FileMode.Create,
                              FileAccess.Write,
                              FileShare.ReadWrite))
@@ -620,16 +619,13 @@ namespace Shinystrap.Pages
 
         private async Task<bool> GetRobloxMinimizeToTray()
         {
-            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var appStorage = Path.Combine(basePath, "Roblox", "LocalStorage", "appStorage.json");
-
-            if (!File.Exists(appStorage))
+            if (!File.Exists(_appStorage))
                 return true;
 
             string json;
 
             await using (var stream = new FileStream(
-                             appStorage,
+                             _appStorage,
                              FileMode.Open,
                              FileAccess.Read,
                              FileShare.ReadWrite))
