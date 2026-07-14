@@ -136,44 +136,33 @@ public partial class AccountManager : Page
     public AccountManager()
     {
         InitializeComponent();
-        DataContext = this;
-        
-        LoadAccounts();
+        DataContext = AccountManaging.Instance;
     }
     
     private void AccountSwitch_Checked(object sender, RoutedEventArgs e)
     {
-        if (sender is not ToggleSwitch { DataContext: Account selected })
+        if (sender is not ToggleSwitch { DataContext: AccountManaging.Account selected })
             return;
 
-        foreach (var account in Accounts)
-            account.IsSelected = ReferenceEquals(account, selected);
-        
-        RobloxManager.RobloxBiscuit = selected.AccountBiscuit;
-        
-        SaveAccounts();
+        AccountManaging.Instance.SetCurrentAccount(selected);
     }
     
     private void AccountSwitch_Unchecked(object sender, RoutedEventArgs e)
     {
-        if (sender is not ToggleSwitch { DataContext: Account account })
+        if (sender is not ToggleSwitch { DataContext: AccountManaging.Account account })
             return;
-
-        account.IsSelected = false;
-        RobloxManager.RobloxBiscuit = "";
         
-        SaveAccounts();
+        account.IsSelected = false;
+        AccountManaging.Instance.CurrentAccount = null;
+        AccountManaging.Instance.SaveAccounts();
     }
     
     private void RemoveButton_Click(object sender, RoutedEventArgs e)
     {
-        if (Accounts.FirstOrDefault(a => a.IsSelected) is not Account selected)
-            return;
-
-        Accounts.Remove(selected);
-        RobloxManager.RobloxBiscuit = "";
-        
-        SaveAccounts();
+        if (AccountManaging.Instance.CurrentAccount is { } selected)
+        {
+            AccountManaging.Instance.RemoveAccount(selected);
+        }
     }
 
     private async void AddButton_Click(object sender, RoutedEventArgs e)
@@ -216,24 +205,7 @@ public partial class AccountManager : Page
 
             if (found)
             {
-                var (name, id) = await GetAccountInformationAsync(biscuit);
-                var avatar = await GetAccountAvatar(id);
-                
-                foreach (var account in Accounts)
-                    account.IsSelected = false;
-                
-                var newAccount = new Account
-                {
-                    AccountBiscuit = biscuit,
-                    Title = name,
-                    Description = $"ID: {id}",
-                    ImageSource = avatar ?? "",
-                    IsSelected = true
-                };
-
-                Accounts.Add(newAccount);
-                RobloxManager.RobloxBiscuit = newAccount.AccountBiscuit;
-                SaveAccounts();
+                await AccountManaging.Instance.AddAccountAsync(biscuit);
                 
                 SnackbarHelper.ShowSuccess("Success", "Successfully added account.");
                 await browser.CloseAsync();
@@ -249,32 +221,5 @@ public partial class AccountManager : Page
             MessageBox.Show("Error", $"Show this to mod/owner: \n{exception.Message}");
            
         }
-    }
-    private readonly HttpHandler _handler = new HttpHandler();
-
-    private record AuthenticatedUserResponse(long Id, string Name);
-    private record AvatarThumbnailResponse(List<AvatarThumbnailData> Data);
-    private record AvatarThumbnailData(string ImageUrl);
-
-    private async Task<(string Name, long Id)> GetAccountInformationAsync(string cookie)
-    {
-        var request = await _handler.SendAsync("https://users.roblox.com/v1/users/authenticated", HttpMethod.Get, new []
-        {
-            new HttpHandler.RequestHeadersEx("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"),
-            new HttpHandler.RequestHeadersEx("Cookie", $".ROBLOSECURITY={cookie}")
-        });
-
-        var user = await request.Content.ReadFromJsonAsync<AuthenticatedUserResponse>();
-        return (user!.Name, user.Id);
-    }
-
-    private async Task<string?> GetAccountAvatar(long id)//maybe use robloxapi's getuserthumbnail instead of ts
-    {
-        var request = await _handler.SendAsync(
-            $"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={id}&size=150x150&format=Png&isCircular=true",
-            HttpMethod.Get);
-
-        var thumb = await request.Content.ReadFromJsonAsync<AvatarThumbnailResponse>();
-        return thumb?.Data.FirstOrDefault()?.ImageUrl;
     }
 }

@@ -487,4 +487,29 @@ public class RobloxApi
 
         return (await Task.WhenAll(tasks)).ToList();
     }
+    
+    public async Task<bool> ValidateCookie(string cookie)
+    {
+        try
+        {
+            var request = await _handler.SendAsync(
+                "https://users.roblox.com/v1/users/authenticated", 
+                HttpMethod.Get,
+                [
+                    new HttpHandler.RequestHeadersEx("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"),
+                    new HttpHandler.RequestHeadersEx("Cookie", $".ROBLOSECURITY={cookie}")
+                ]);
+
+            if (!request.IsSuccessStatusCode)
+                return false;
+
+            var responseText = await request.Content.ReadAsStringAsync();
+            
+            return !responseText.Contains("\"errors\"", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

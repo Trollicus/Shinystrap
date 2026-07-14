@@ -52,9 +52,18 @@ namespace Shinystrap.Pages
         {
             if (sender is Wpf.Ui.Controls.Button button)
             {
-                if (string.IsNullOrEmpty(RobloxManager.RobloxBiscuit))
+                var cookie = RobloxManager.RobloxBiscuit;
+                if (string.IsNullOrEmpty(cookie))
                 {
                     SnackbarHelper.ShowWarning("Warning", "Please add account in Account Manager before using the Join!");
+                    return;
+                }
+
+                bool isValid = await _api.ValidateCookie(cookie);
+
+                if (!isValid)
+                {
+                    SnackbarHelper.ShowWarning("Warning", $"Invalid/Expired Account!");
                     return;
                 }
                 
@@ -80,7 +89,7 @@ namespace Shinystrap.Pages
                 {
                     FileName = robloxExe,
                     Arguments =
-                        $"--app -t {await api.GetAuthenticationTicketAsync(RobloxManager.RobloxBiscuit)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={placeId} -LaunchExp InApp"
+                        $"--app -t {await api.GetAuthenticationTicketAsync(cookie)} -j https://assetgame.roblox.com/game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={DateNow()}&placeId={placeId} -LaunchExp InApp"
                 });
             }
         }

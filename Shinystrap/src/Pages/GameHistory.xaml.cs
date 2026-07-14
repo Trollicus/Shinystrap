@@ -49,8 +49,16 @@ namespace Shinystrap.Pages
                 SnackbarHelper.ShowWarning("Warning", "Please add account in Account Manager!");
                 return;
             }
-            
             var api = new RobloxApi();
+            
+            bool isValid = await api.ValidateCookie(robloSecurity);
+
+            if (!isValid)
+            {
+                SnackbarHelper.ShowWarning("Warning", $"Invalid/Expired Account!");
+                return;
+            }
+            
             var currentVersion = await api.GetRobloxVersionAsync();
             
             if (await api.CheckForUpdatesAsync())

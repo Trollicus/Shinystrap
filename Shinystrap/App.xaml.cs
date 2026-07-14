@@ -18,9 +18,9 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
-        AccountHandler.LoadAccounts();
-
+        
+        AccountManaging.Instance.LoadAccounts();
+        
         EventManager.RegisterClassHandler(
             typeof(UIElement),
             UIElement.PreviewMouseWheelEvent,
