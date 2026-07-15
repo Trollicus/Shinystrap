@@ -35,6 +35,14 @@ public class RobloxApi
         return installedVersion ?? version;
     }
 
+    public async Task SetRegistryRobloxVersion(string version)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(
+            @"Software\Classes\roblox-player\shell\open\command");
+
+        key?.SetValue("version", version, RegistryValueKind.String);
+    }
+
     public async Task<string> GetRobloxVersionAsync()
     {
         var request = await _handler.SendAsync("https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer",

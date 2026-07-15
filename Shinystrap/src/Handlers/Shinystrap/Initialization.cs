@@ -308,28 +308,21 @@ public class Initialization
     public Task SetRobloxProtocol()
     {
         return Task.Run(() =>
-            {
-                var currentProcess =
-                    Environment.ProcessPath ??
-                    Path.Combine(AppContext.BaseDirectory, "Shinystrap.exe");
+        {
+            var currentProcess =
+                Environment.ProcessPath ??
+                Path.Combine(AppContext.BaseDirectory, "Shinystrap.exe");
 
-                var value = $"\"{currentProcess}\" \"%1\"";
+            var value = $"\"{currentProcess}\" \"%1\"";
 
-                using var key = Registry.CurrentUser.OpenSubKey(
-                    @"Software\Classes\roblox-player\shell\open\command",
-                    writable: true);
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Classes\roblox-player\shell\open\command",
+                writable: true);
 
-                if (key is null)
-                    throw new Exception("Registry key not found.");
+            if (key is null)
+                throw new Exception("Registry key not found.");
 
-                key.SetValue("", value);
-            })
-            .ContinueWith(_ =>
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    SnackbarHelper.ShowSuccess("Shinystrap", "Initialized!");
-                });
-            });
+            key.SetValue("", value);
+        });
     }
 }

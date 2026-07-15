@@ -217,89 +217,21 @@ namespace Shinystrap.Pages
             }
         }
         
-        private CancellationTokenSource _cancellation = null!;
         private void RbxAutoUpdateToggle_OnChecked(object sender, RoutedEventArgs e)
         {
             Properties.Settings.Default.RbxAutoUpdate = true;
-            Properties.Settings.Default.Save();
+            _ = Task.Run(() => Properties.Settings.Default.Save());
 
-            _cancellation?.Cancel();
-            _cancellation?.Dispose();
-
-            _cancellation = new CancellationTokenSource();
-            _ = RbxAutoUpdate(_cancellation.Token);
-        }
-
-        private async Task RbxAutoUpdate(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    if (await _api.CheckForUpdatesAsync())
-                    {
-                        SnackbarHelper.ShowInfo("New Version Detected", "New Version Detected, Updating!", TimeSpan.FromSeconds(5));
-                        
-                        var processes = Process.GetProcessesByName("RobloxPlayerBeta");
-                        try
-                        {
-                            if (processes.Length > 0)
-                            {
-                                SnackbarHelper.ShowError("Error", "Please close Roblox before Shinystrap updates.");
-
-                                await Task.Delay(TimeSpan.FromMinutes(10), token);
-                                continue;
-                            }
-                        }
-                        finally
-                        {
-                            foreach (var process in processes)
-                                process.Dispose();
-                        }
-
-                        try
-                        {
-                            var initialization = new Initialization();
-
-                            var currentVersion = await _api.GetRobloxVersionAsync();
-                            var defaultPath = Properties.Settings.Default.DefaultInstalledPath;
-
-                            await initialization.InitializeAsync(currentVersion, defaultPath);
-                            await initialization.SetRobloxProtocol();
-                        }
-                        catch (Exception ex)
-                        {
-                            SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
-                        }
-                    }
-                    
-                    await Task.Delay(TimeSpan.FromMinutes(10), token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        RbxAutoUpdateToggle.IsChecked = false;
-                    });
-
-                    SnackbarHelper.ShowError("Shinystrap - Error", ex.Message);
-                    break;
-                }
-            }
+            ((App)Application.Current).StartRbxAutoUpdate();
         }
         
         private void RbxAutoUpdateToggle_OnUnchecked(object sender, RoutedEventArgs e)
         {
-            _cancellation?.Cancel();
-            _cancellation?.Dispose();
-            _cancellation = null!;
-
             Properties.Settings.Default.RbxAutoUpdate = false;
             _ = Task.Run(() => Properties.Settings.Default.Save());
+            
+
+            ((App)Application.Current).StopRbxAutoUpdate();
         }
 
         private void BrowsePath_OnClick(object sender, RoutedEventArgs e)

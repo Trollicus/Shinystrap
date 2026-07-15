@@ -2,11 +2,9 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
-using PuppeteerSharp;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
 using Wpf.Ui.Controls;
-using MessageBox = System.Windows.MessageBox;
 using Page = System.Windows.Controls.Page;
 
 namespace Shinystrap.Pages

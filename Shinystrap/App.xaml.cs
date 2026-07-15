@@ -21,6 +21,11 @@ public partial class App : Application
         
         AccountManaging.Instance.LoadAccounts();
         
+        if (Shinystrap.Properties.Settings.Default.RbxAutoUpdate)
+        {
+            StartRbxAutoUpdate();
+        }
+        
         EventManager.RegisterClassHandler(
             typeof(UIElement),
             UIElement.PreviewMouseWheelEvent,
@@ -36,6 +41,98 @@ public partial class App : Application
             .ContinueWith(_ => Dispatcher.Invoke(Shutdown));
     }
 
+    private CancellationTokenSource? _cancellation;
+
+    public void StartRbxAutoUpdate()
+    {
+        if (_cancellation != null)
+            return;
+
+        _cancellation = new CancellationTokenSource();
+        _ = RbxAutoUpdate(_cancellation.Token);
+    }
+
+    public void StopRbxAutoUpdate()
+    {
+        _cancellation?.Cancel();
+        _cancellation?.Dispose();
+        _cancellation = null;
+    }
+
+    private readonly RobloxApi _api = new();
+    
+    private async Task RbxAutoUpdate(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    Console.Write("test1");
+                    if (await _api.CheckForUpdatesAsync())
+                    {
+                        SnackbarHelper.ShowInfo("New Version Detected", "New Version Detected, Updating!", TimeSpan.FromSeconds(5));
+                        
+                        var processes = Process.GetProcessesByName("RobloxPlayerBeta");
+                        try
+                        {
+                            if (processes.Length > 0)
+                            {
+                                SnackbarHelper.ShowError("Error", "Please close Roblox before Shinystrap updates.");
+
+                                await Task.Delay(TimeSpan.FromMinutes(10), token);
+                                continue;
+                            }
+                        }
+                        finally
+                        {
+                            foreach (var process in processes)
+                                process.Dispose();
+                        }
+
+                        try
+                        {
+                            var initialization = new Initialization();
+
+                            var currentVersion = await _api.GetRobloxVersionAsync();
+                            var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
+
+                            await initialization.InitializeAsync(currentVersion, defaultPath);
+                            await initialization.SetRobloxProtocol();
+
+                            await _api.SetRegistryRobloxVersion(currentVersion);
+                            
+                            SnackbarHelper.ShowSuccess(
+                                "Shinystrap",
+                                "Roblox updated successfully!"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
+                        }
+                    }
+                    
+                    await Task.Delay(TimeSpan.FromMinutes(10), token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        Shinystrap.Properties.Settings.Default.RbxAutoUpdate = false;
+                        _ = Task.Run(() => Shinystrap.Properties.Settings.Default.Save(), token);
+                        StopRbxAutoUpdate();
+                    });
+
+                    SnackbarHelper.ShowError("Shinystrap - Error", ex.Message);
+                    break;
+                }
+            }
+        }
+    
     //Thanks to JetBrains Rider AI on this one lol
     private static void OnGlobalPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -102,10 +199,9 @@ public partial class App : Application
 
     private async Task HandleProtocolLaunchAsync(string[] args)
     {
-        var api = new RobloxApi();
-        var currentVersion = await api.GetRobloxVersionAsync();
+        var currentVersion = await _api.GetRobloxVersionAsync();
 
-        if (await api.CheckForUpdatesAsync())
+        if (await _api.CheckForUpdatesAsync())
         {
             MessageBox.Show("Outdated Roblox, please update before launching!");
             return;
