@@ -119,6 +119,7 @@ namespace Shinystrap.Pages
                 _ = Task.Run(() => Properties.Settings.Default.Save());
 
                 await initializer.SetRobloxProtocol();
+                await _api.SetRegistryRobloxVersion(currentVersion);
                 
                 SnackbarHelper.ShowSuccess(
                     "Shinystrap",
