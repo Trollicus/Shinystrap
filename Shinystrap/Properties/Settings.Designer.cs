@@ -94,5 +94,17 @@ namespace Shinystrap.Properties {
                 this["StopRbxMinimize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShinyAutoUpdate {
+            get {
+                return ((bool)(this["ShinyAutoUpdate"]));
+            }
+            set {
+                this["ShinyAutoUpdate"] = value;
+            }
+        }
     }
 }

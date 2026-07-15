@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Security.Cryptography;
 using System.Web;
@@ -10,22 +11,36 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Shinystrap.Handlers.Roblox;
 using Shinystrap.Handlers.Shinystrap;
+using Shinystrap.Handlers.Web;
 
 namespace Shinystrap;
 
 public partial class App : Application
 {
+    public const string Version = "v1.0.3";
+
+    private readonly HttpHandler _handler = new();
+    private readonly RobloxApi _api = new();
+    
+    private CancellationTokenSource? _cancellation;
+    private CancellationTokenSource? _updateCts;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        
+
         AccountManaging.Instance.LoadAccounts();
-        
+
         if (Shinystrap.Properties.Settings.Default.RbxAutoUpdate)
         {
             StartRbxAutoUpdate();
         }
-        
+
+        if (Shinystrap.Properties.Settings.Default.ShinyAutoUpdate)
+        {
+            StartAppAutoUpdate();
+        }
+
         EventManager.RegisterClassHandler(
             typeof(UIElement),
             UIElement.PreviewMouseWheelEvent,
@@ -41,7 +56,185 @@ public partial class App : Application
             .ContinueWith(_ => Dispatcher.Invoke(Shutdown));
     }
 
-    private CancellationTokenSource? _cancellation;
+    private async Task StartUpdateLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                await CheckForUpdatesAsync(true);
+                await Task.Delay(TimeSpan.FromMinutes(10), token);
+            }
+            catch (Exception exception)
+            {
+                Shinystrap.Properties.Settings.Default.ShinyAutoUpdate = false;
+                Shinystrap.Properties.Settings.Default.Save();
+                StopAppAutoUpdate();
+
+                SnackbarHelper.ShowError("Shinystrap - Error", $"{exception.Message}");
+
+                break;
+            }
+        }
+    }
+
+    public async Task CheckForUpdatesAsync(bool silent = false)
+    {
+        var appVersion =
+            await _handler.GetStringAsync(
+                "https://raw.githubusercontent.com/Trollicus/Shinystrap/main/version.txt");
+
+        if (string.Equals(Version, appVersion.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            if (!silent)
+                SnackbarHelper.ShowSuccess("Shinystrap", "You're already on the latest version!");
+
+            return;
+        }
+
+        SnackbarHelper.ShowInfo("Shinystrap", "New Shiny version detected, updating!");
+
+        var appDir = AppContext.BaseDirectory;
+        var tempRoot = Path.Combine(Path.GetTempPath(), "Shinystrap", Guid.NewGuid().ToString("N"));
+        var zipPath = Path.Combine(tempRoot, "update.zip");
+        var extractPath = Path.Combine(tempRoot, "extract");
+        Directory.CreateDirectory(tempRoot);
+        Directory.CreateDirectory(extractPath);
+
+        var updateUrl = "https://github.com/Trollicus/Shinystrap/releases/latest/download/Shinystrap.zip";
+        await _handler.DownloadFileAsync(updateUrl, zipPath);
+
+        await ZipFile.ExtractToDirectoryAsync(zipPath, extractPath, overwriteFiles: true);
+
+        var updaterScript = Path.Combine(tempRoot, "update.bat");
+        var appExe = Path.Combine(appDir, "Shinystrap.exe");
+
+        var script = $"""
+                      @echo off
+                      setlocal
+                      cd /d "{appDir}"
+
+                      :waitloop
+                      timeout /t 2 /nobreak >nul
+                      tasklist /fi "imagename eq Shinystrap.exe" | find /i "Shinystrap.exe" >nul
+                      if not errorlevel 1 goto waitloop
+
+                      del /f /q "{appDir}\*.*" >nul 2>&1
+                      for /d %%D in ("{appDir}\*") do rmdir /s /q "%%D" >nul 2>&1
+
+                      xcopy /y /e /i "{extractPath}\*" "{appDir}\" >nul
+
+                      powershell -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath '{appExe}' -WorkingDirectory '{appDir}'"
+
+                      timeout /t 2 /nobreak >nul
+
+                      rmdir /s /q "{extractPath}" >nul 2>&1
+                      del /f /q "{zipPath}" >nul 2>&1
+                      rmdir /s /q "{tempRoot}" >nul 2>&1
+
+                      exit /b 0
+                      """;
+
+        await File.WriteAllTextAsync(updaterScript, script);
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = updaterScript,
+            UseShellExecute = true,
+            WorkingDirectory = tempRoot
+        });
+
+        Environment.Exit(0);
+    }
+
+    private async Task RbxAutoUpdate(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                Console.Write("test1");
+                if (await _api.CheckForUpdatesAsync())
+                {
+                    SnackbarHelper.ShowInfo("New Version Detected", "New Version Detected, Updating!",
+                        TimeSpan.FromSeconds(5));
+
+                    var processes = Process.GetProcessesByName("RobloxPlayerBeta");
+                    try
+                    {
+                        if (processes.Length > 0)
+                        {
+                            SnackbarHelper.ShowError("Error", "Please close Roblox before Shinystrap updates.");
+
+                            await Task.Delay(TimeSpan.FromMinutes(10), token);
+                            continue;
+                        }
+                    }
+                    finally
+                    {
+                        foreach (var process in processes)
+                            process.Dispose();
+                    }
+
+                    try
+                    {
+                        var initialization = new Initialization();
+
+                        var currentVersion = await _api.GetRobloxVersionAsync();
+                        var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
+
+                        await initialization.InitializeAsync(currentVersion, defaultPath);
+                        await initialization.SetRobloxProtocol();
+
+                        await _api.SetRegistryRobloxVersion(currentVersion);
+
+                        SnackbarHelper.ShowSuccess(
+                            "Shinystrap",
+                            "Roblox updated successfully!"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
+                    }
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(10), token);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Shinystrap.Properties.Settings.Default.RbxAutoUpdate = false;
+                    _ = Task.Run(() => Shinystrap.Properties.Settings.Default.Save(), token);
+                    StopRbxAutoUpdate();
+                });
+
+                SnackbarHelper.ShowError("Shinystrap - Error", ex.Message);
+                break;
+            }
+        }
+    }
+
+    public void StartAppAutoUpdate()
+    {
+        if (_updateCts != null)
+            return;
+
+        _updateCts = new CancellationTokenSource();
+        _ = StartUpdateLoop(_updateCts.Token);
+    }
+
+    public void StopAppAutoUpdate()
+    {
+        _updateCts?.Cancel();
+        _updateCts?.Dispose();
+        _updateCts = null;
+    }
 
     public void StartRbxAutoUpdate()
     {
@@ -59,80 +252,6 @@ public partial class App : Application
         _cancellation = null;
     }
 
-    private readonly RobloxApi _api = new();
-    
-    private async Task RbxAutoUpdate(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    Console.Write("test1");
-                    if (await _api.CheckForUpdatesAsync())
-                    {
-                        SnackbarHelper.ShowInfo("New Version Detected", "New Version Detected, Updating!", TimeSpan.FromSeconds(5));
-                        
-                        var processes = Process.GetProcessesByName("RobloxPlayerBeta");
-                        try
-                        {
-                            if (processes.Length > 0)
-                            {
-                                SnackbarHelper.ShowError("Error", "Please close Roblox before Shinystrap updates.");
-
-                                await Task.Delay(TimeSpan.FromMinutes(10), token);
-                                continue;
-                            }
-                        }
-                        finally
-                        {
-                            foreach (var process in processes)
-                                process.Dispose();
-                        }
-
-                        try
-                        {
-                            var initialization = new Initialization();
-
-                            var currentVersion = await _api.GetRobloxVersionAsync();
-                            var defaultPath = Shinystrap.Properties.Settings.Default.DefaultInstalledPath;
-
-                            await initialization.InitializeAsync(currentVersion, defaultPath);
-                            await initialization.SetRobloxProtocol();
-
-                            await _api.SetRegistryRobloxVersion(currentVersion);
-                            
-                            SnackbarHelper.ShowSuccess(
-                                "Shinystrap",
-                                "Roblox updated successfully!"
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            SnackbarHelper.ShowError("Error - Show Dev", ex.Message);
-                        }
-                    }
-                    
-                    await Task.Delay(TimeSpan.FromMinutes(10), token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        Shinystrap.Properties.Settings.Default.RbxAutoUpdate = false;
-                        _ = Task.Run(() => Shinystrap.Properties.Settings.Default.Save(), token);
-                        StopRbxAutoUpdate();
-                    });
-
-                    SnackbarHelper.ShowError("Shinystrap - Error", ex.Message);
-                    break;
-                }
-            }
-        }
-    
     //Thanks to JetBrains Rider AI on this one lol
     private static void OnGlobalPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
