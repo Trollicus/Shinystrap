@@ -17,7 +17,7 @@ namespace Shinystrap;
 
 public partial class App : Application
 {
-    public const string Version = "v1.0.3";
+    public const string Version = "v1.0.4";
 
     private readonly HttpHandler _handler = new();
     private readonly RobloxApi _api = new();
