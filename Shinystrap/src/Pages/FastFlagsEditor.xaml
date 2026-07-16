@@ -38,7 +38,8 @@
              BorderThickness="1"
              BorderBrush="{DynamicResource ControlElevationBorderBrush}"
              CanUserAddRows="False"
-             SelectionMode="Single">
+             SelectionMode="Extended"
+             AllowDrop="True">
             <ui:DataGrid.Columns>
                 <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="200"/>
                 <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>

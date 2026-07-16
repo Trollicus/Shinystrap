@@ -26,9 +26,15 @@ namespace Shinystrap.Pages
             InitializeComponent();
             DataContext = this;
             
+            FlagsDataGrid.KeyDown += (s, e) =>
+            {
+                if (e.Key == System.Windows.Input.Key.Delete)
+                    DeleteFlag_Click(null, null);
+            };
+            
             SnackbarHelper.ShowInfo("Warning!", "There's Allowlist by Roblox about the flags, se at your own risk!");
         }
-
+        
         public async Task CreateFFlagsFile()
         {
             var api = new RobloxApi();
@@ -36,6 +42,7 @@ namespace Shinystrap.Pages
             
             var robloxPath = Path.Combine(
                 Properties.Settings.Default.DefaultInstalledPath,
+                "Versions",
                 currentVersion,
                 "ClientSettings");
             
@@ -62,8 +69,15 @@ namespace Shinystrap.Pages
 
         private void DeleteFlag_Click(object sender, RoutedEventArgs e)
         {
-            if (FlagsDataGrid.SelectedItem is FlagItem selected)
-                Items.Remove(selected);
+            if (FlagsDataGrid.SelectedItems.Count == 0)
+                return;
+            
+            var itemsToRemove = FlagsDataGrid.SelectedItems.Cast<FlagItem>().ToList();
+
+            foreach (var item in itemsToRemove)
+            {
+                Items.Remove(item);
+            }
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
@@ -120,6 +134,7 @@ namespace Shinystrap.Pages
 
             var filePath = Path.Combine(
                 Properties.Settings.Default.DefaultInstalledPath,
+                "Versions",
                 currentVersion,
                 "ClientSettings",
                 "ClientAppSettings.json");
@@ -140,6 +155,7 @@ namespace Shinystrap.Pages
         {
             var filePath = Path.Combine(
                 Properties.Settings.Default.DefaultInstalledPath,
+                "Versions",
                 await Api.GetRobloxVersionAsync(),
                 "ClientSettings",
                 "ClientAppSettings.json");
