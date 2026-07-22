@@ -85,6 +85,11 @@ namespace Shinystrap.Pages
                     currentVersion,
                     "RobloxPlayerBeta.exe");
                 
+                if (!File.Exists(robloxExe))
+                {
+                    SnackbarHelper.ShowError("Error", "Please initialize Shinystrap first before using this feature!");
+                }
+                
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = robloxExe,

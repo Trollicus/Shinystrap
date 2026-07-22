@@ -16,7 +16,7 @@ namespace Shinystrap.Pages
             public required string Title { get; init; }
             public required string Description { get; init; }
             public required string PlaceId { get; init; }
-            public required ImageSource ImageSource { get; init; }
+            public required object ImageSource { get; init; }
         }
         public GameHistory()
         {
@@ -70,6 +70,11 @@ namespace Shinystrap.Pages
                 "Versions",
                 currentVersion,
                 "RobloxPlayerBeta.exe");
+
+            if (!File.Exists(robloxExe))
+            {
+                SnackbarHelper.ShowError("Error", "Please initialize Shinystrap first before using this feature!");
+            }
             
             Process.Start(new ProcessStartInfo
             {

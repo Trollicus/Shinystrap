@@ -222,23 +222,24 @@ namespace Shinystrap.Pages
             _cts = null;
             _lastNotifiedIp = null;
         }
-
+        
+        
         private void RbxMutex_OnChecked(object sender, RoutedEventArgs e)
         {
             try
             {
-                _mutex1 = new Mutex(true, "ROBLOX_singletonMutex", out bool created1);
-                _mutex2 = new Mutex(true, "ROBLOX_singletonEvent", out bool created2);
-
-                if (created1 && created2) return;
-                SnackbarHelper.ShowError("Error", "Make sure roblox is closed first!");
-                Dispatcher.BeginInvoke(() => MutexSwitch.IsChecked = false);
+                _mutex1 = new Mutex(true, "ROBLOX_singletonMutex", out _);
+                _mutex2 = new Mutex(true, "ROBLOX_singletonEvent", out _);
+                
             }
-            catch (Exception)
+            catch
             {
                 CleanupMutexes();
 
-                SnackbarHelper.ShowError("Failed to initialize", "Close all Roblox windows first!");
+                SnackbarHelper.ShowError(
+                    "Failed to initialize",
+                    "Close all Roblox windows first!"
+                );
 
                 Dispatcher.BeginInvoke(() => MutexSwitch.IsChecked = false);
             }
